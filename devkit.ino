@@ -26,9 +26,10 @@ class make_module: public EuroStep::EuroStep{
 	}
 };
 
+make_module module; // make the class
+
 // RUNS ONCE
 void setup(){
-	make_module module; // make the class
 	module.input_mode_is_analog[0] = true; // if input is readAnalog()
 	module.enable_clock_events(0); // treat input 0 as a clock signal (optional)
 	module.output_mode_is_analog[0] = true; // send output 0 to DAC
