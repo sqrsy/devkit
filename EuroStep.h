@@ -10,7 +10,8 @@ class EuroStep{
     bool debug = true;
     int input_is_true_threshold = 500;
     bool input_mode_is_analog[hardware::NUMBER_OF_INPUTS];
-    int input_values[hardware::NUMBER_OF_INPUTS];
+    int input_values[hardware::NUMBER_OF_INPUTS]; // the input as averaged over 8 readings
+    int input_history[hardware::NUMBER_OF_INPUTS][8]; // the last 8 readings
     int pot_values[hardware::NUMBER_OF_POTS];
     int switch_values[hardware::NUMBER_OF_SWITCHES];
     int output_values_old[hardware::NUMBER_OF_OUTPUTS];
@@ -76,8 +77,9 @@ class EuroStep{
       
       for(int i = 0; i < hardware::NUMBER_OF_INPUTS; i++){
         if(input_mode_is_analog[i]){
-          input_values[i] = read_analog_mV(
+          input_values[i] = read_analog_mV_smooth(
           hardware::PINS_INPUT[i],
+          input_history[i],
           hardware::V_DIVIDER_R1,
           hardware::V_DIVIDER_R2,
           debug
