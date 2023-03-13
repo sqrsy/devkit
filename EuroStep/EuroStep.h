@@ -1,7 +1,7 @@
 #include <assert.h>
-#include "hardware_rasa6.h"
-#include "eurotools-v2.h"
-#include "mcp4822.h"
+#include "hardware/hardware_switchel.h"
+#include "eurotools/eurotools-v2.h"
+#include "chips/mcp4822.h"
 
 class EuroStep{
 
@@ -13,7 +13,7 @@ class EuroStep{
     int input_values[hardware::NUMBER_OF_INPUTS]; // the input as averaged over 8 readings
     int input_history[hardware::NUMBER_OF_INPUTS][8]; // the last 8 readings
     int pot_values[hardware::NUMBER_OF_POTS];
-    int switch_values[hardware::NUMBER_OF_SWITCHES];
+    bool switch_values[hardware::NUMBER_OF_SWITCHES];
     int output_values_old[hardware::NUMBER_OF_OUTPUTS];
     bool output_mode_is_analog[hardware::NUMBER_OF_OUTPUTS];
     int output_values[hardware::NUMBER_OF_OUTPUTS];
@@ -122,6 +122,14 @@ class EuroStep{
       
       for(int i = 0; i < hardware::NUMBER_OF_SWITCHES; i++){
         switch_values[i] = digitalRead(hardware::PINS_SWITCH[i]);
+      }
+
+      if(debug){
+        Serial.println ("");
+        for(int i = 0; i < hardware::NUMBER_OF_SWITCHES; i++){
+          Serial.print (switch_values[i]);
+        }
+        Serial.println ("");
       }
     }
 

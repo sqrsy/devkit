@@ -18,7 +18,7 @@ namespace hardware{
 
   // SWITCH DESIGN
   const int NUMBER_OF_SWITCHES = 12;
-  int PINS_SWITCH[13, A0, A1, A3, A2, 12, 11, 10, 9, 8, 7, 6];
+  int PINS_SWITCH[NUMBER_OF_SWITCHES] = {13, A0, A1, A3, A2, 12, 11, 10, 9, 8, 7, 6};
 
   // OUTPUT DESIGN
   const int NUMBER_OF_OUTPUTS = 2;
