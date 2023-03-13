@@ -125,7 +125,6 @@ class EuroStep{
       }
 
       if(debug){
-        Serial.println ("");
         for(int i = 0; i < hardware::NUMBER_OF_SWITCHES; i++){
           Serial.print (switch_values[i]);
         }
