@@ -1,5 +1,5 @@
 #include <assert.h>
-#include "eurotools/eurotools-v2.h"
+#include "eurotools/eurotools.h"
 #include "chips/mcp4822.h"
 
 class EuroStep{
