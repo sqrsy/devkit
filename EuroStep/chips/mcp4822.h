@@ -23,7 +23,7 @@ void update_dac_code(bool data[16], long outVolt, bool channel, bool verbose = f
 	
 	// convert output voltage to DAC value
 	long long_base = power_long(2, 12);
-	long dacCode =  long_base * outVolt / gain / 2048;
+	long dacCode =	long_base * outVolt / gain / 2048;
 	long dacCode_old = dacCode;
 	
 	// write DAC value as bit code

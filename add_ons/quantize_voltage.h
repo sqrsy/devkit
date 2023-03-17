@@ -6,7 +6,7 @@ int quantize_voltage(int mV, bool SCALE[12], bool debug = false){
 	int outTone = 99; // dummy value
 	
 	// convert incoming voltage to 'remainder' that needs rounding
-	//  (the result is a decimal ranges from 0 to 12)
+	//	(the result is a decimal ranges from 0 to 12)
 	int residVolts = mV % 1000;
 	float residTones = residVolts / 83.3333;
 	
@@ -34,30 +34,30 @@ int quantize_voltage(int mV, bool SCALE[12], bool debug = false){
 		// if both notes are in scale, select the one that is closest
 		}else if(SCALE[floortone] == 1 & SCALE[ceiltone] == 1){
 		
-        if(round(residTones) == floor(residTones)){
+		if(round(residTones) == floor(residTones)){
 		outTone = floortone;
 		octave_shift = octave_shift_f;
 		break;
-        }else{
+		}else{
 		outTone = ceiltone;
 		octave_shift = octave_shift_c;
 		break;
-        }
+		}
 		
 		// if neither note is in scale, look beyond to +/- 1 semi-tone
 		}else{
 		
-        floortone -= 1;
-        if(floortone == -1){ // if out-of-bounds on low end
+		floortone -= 1;
+		if(floortone == -1){ // if out-of-bounds on low end
 		floortone = 11; // so move down to 11 which is 12th note, i.e., is B
 		octave_shift_f -= 1; // track you have moved down an octave
-        }
+		}
 		
-        ceiltone += 1;
-        if(ceiltone == 12){ // if out-of-bounds on high end
+		ceiltone += 1;
+		if(ceiltone == 12){ // if out-of-bounds on high end
 		ceiltone = 0; // so move up to 0 which is 1st note, i.e., is C
 		octave_shift_c += 1; // track you have moved up an octive
-        }
+		}
 		}
 		}
 		

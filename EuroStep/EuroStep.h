@@ -6,22 +6,22 @@ class EuroStep{
 	
 	public:
 	
-    bool debug = true;
-    int input_is_true_threshold = 500;
-    bool input_mode_is_analog[NUMBER_OF_INPUTS];
-    int input_values[NUMBER_OF_INPUTS]; // the input as averaged over 8 readings
-    int input_history[NUMBER_OF_INPUTS][8]; // the last 8 readings
-    int pot_values[NUMBER_OF_POTS];
-    bool switch_values[NUMBER_OF_SWITCHES];
-    int output_values_old[NUMBER_OF_OUTPUTS];
-    bool output_mode_is_analog[NUMBER_OF_OUTPUTS];
-    int output_values[NUMBER_OF_OUTPUTS];
-    bool dac_code[16]; // used if output_mode_is_analog
-    int dac_event; // helps track which DAC to write
+	bool debug = true;
+	int input_is_true_threshold = 500;
+	bool input_mode_is_analog[NUMBER_OF_INPUTS];
+	int input_values[NUMBER_OF_INPUTS]; // the input as averaged over 8 readings
+	int input_history[NUMBER_OF_INPUTS][8]; // the last 8 readings
+	int pot_values[NUMBER_OF_POTS];
+	bool switch_values[NUMBER_OF_SWITCHES];
+	int output_values_old[NUMBER_OF_OUTPUTS];
+	bool output_mode_is_analog[NUMBER_OF_OUTPUTS];
+	int output_values[NUMBER_OF_OUTPUTS];
+	bool dac_code[16]; // used if output_mode_is_analog
+	int dac_event; // helps track which DAC to write
 	
 	///////////////////////////////////////////////////////////////////////////////
-    /// Hardware variables
-    ///////////////////////////////////////////////////////////////////////////////
+	/// Hardware variables
+	///////////////////////////////////////////////////////////////////////////////
 	
 	int pins_input[NUMBER_OF_INPUTS] = PINS_INPUT;
 	int pins_pot[NUMBER_OF_POTS] = PINS_POT;
@@ -30,27 +30,29 @@ class EuroStep{
 	int pins_dac_a[4] = PINS_DAC_A;
 	int pins_dac_b[4] = PINS_DAC_B;
 	
-    ///////////////////////////////////////////////////////////////////////////////
-    /// Getters and setters
-    ///////////////////////////////////////////////////////////////////////////////
+	///////////////////////////////////////////////////////////////////////////////
+	/// Getters and setters
+	///////////////////////////////////////////////////////////////////////////////
 	
-    void send_to_output(int index, int value){
+	void send_to_output(int index, int value){
 		output_values[index] = value;
 	}
 	
-    ///////////////////////////////////////////////////////////////////////////////
-    /// These functions are intended to be written by the derived program
-    ///////////////////////////////////////////////////////////////////////////////
-    
-    virtual void on_clock_rise_do(){}
-    virtual void on_clock_fall_do(){}
-    virtual void on_step_do(){}
+	///////////////////////////////////////////////////////////////////////////////
+	/// These functions are intended to be written by the derived program
+	///////////////////////////////////////////////////////////////////////////////
 	
-    ///////////////////////////////////////////////////////////////////////////////
-    /// This is run at start up to initialise pins based on hardware
-    ///////////////////////////////////////////////////////////////////////////////
+	virtual void on_clock_rise_do(){}
+	virtual void on_clock_fall_do(){}
+	virtual void on_clock_rise_2_do(){}
+	virtual void on_clock_fall_2_do(){}
+	virtual void on_step_do(){}
 	
-    void start(){
+	///////////////////////////////////////////////////////////////////////////////
+	/// This is run at start up to initialise pins based on hardware
+	///////////////////////////////////////////////////////////////////////////////
+	
+	void start(){
 		
 		if(debug) Serial.begin(9600);
 		
@@ -79,11 +81,11 @@ class EuroStep{
 		}
 	}
 	
-    ///////////////////////////////////////////////////////////////////////////////
-    /// This is a generic way to read audio jack inputs as analog or digital
-    ///////////////////////////////////////////////////////////////////////////////
+	///////////////////////////////////////////////////////////////////////////////
+	/// This is a generic way to read audio jack inputs as analog or digital
+	///////////////////////////////////////////////////////////////////////////////
 	
-    void read_inputs(){
+	void read_inputs(){
 		
 		for(int i = 0; i < NUMBER_OF_INPUTS; i++){
 			if(input_mode_is_analog[i]){
@@ -106,11 +108,11 @@ class EuroStep{
 		}
 	}
 	
-    ///////////////////////////////////////////////////////////////////////////////
-    /// This is a generic way to read pots as a percent value
-    ///////////////////////////////////////////////////////////////////////////////
-    
-    void read_pots(){
+	///////////////////////////////////////////////////////////////////////////////
+	/// This is a generic way to read pots as a percent value
+	///////////////////////////////////////////////////////////////////////////////
+	
+	void read_pots(){
 		
 		for(int i = 0; i < NUMBER_OF_POTS; i++){
 			pot_values[i] = read_analog_pct(
@@ -124,11 +126,11 @@ class EuroStep{
 		}
 	}
 	
-    ///////////////////////////////////////////////////////////////////////////////
-    /// This is a generic way to read switches as bools
-    ///////////////////////////////////////////////////////////////////////////////
-    
-    void read_switches(){
+	///////////////////////////////////////////////////////////////////////////////
+	/// This is a generic way to read switches as bools
+	///////////////////////////////////////////////////////////////////////////////
+	
+	void read_switches(){
 		
 		for(int i = 0; i < NUMBER_OF_SWITCHES; i++){
 			switch_values[i] = digitalRead(pins_switch[i]);
@@ -142,20 +144,20 @@ class EuroStep{
 		}
 	}
 	
-    ///////////////////////////////////////////////////////////////////////////////
-    /// Provide helper functions for clock rise and clock fall
-    ///////////////////////////////////////////////////////////////////////////////
+	///////////////////////////////////////////////////////////////////////////////
+	/// Provide helper functions for clock rise and clock fall
+	///////////////////////////////////////////////////////////////////////////////
 	
-    // in order to run events on clock rise or fall, we need to know
-    //  what input to track as the clock signal
-    int clock_input = -1; // -1 disables clock events
-    void enable_clock_events(int index){
+	// in order to run events on clock rise or fall, we need to know
+	//	what input to track as the clock signal
+	int clock_input = -1; // -1 disables clock events
+	void enable_clock_events(int index){
 		clock_input = index;
 	}
 	
-    bool current_state_is_high;
-    bool last_state_is_low = true;
-    void run_clock_events(){
+	bool current_state_is_high;
+	bool last_state_is_low = true;
+	void run_clock_events(){
 		
 		if(clock_input > -1){ // by default program assumes no clock exists
 			
@@ -178,12 +180,48 @@ class EuroStep{
 			}
 		}
 	}
-    
-    ///////////////////////////////////////////////////////////////////////////////
-    /// This is a generic way to write digital outputs or use MCP4822 DAC
-    ///////////////////////////////////////////////////////////////////////////////
-    
-    void write_outputs(){
+	
+	///////////////////////////////////////////////////////////////////////////////
+	/// Provide helper functions for clock rise and clock fall
+	///////////////////////////////////////////////////////////////////////////////
+	
+	// allow for a second clock
+	int clock_input_2 = -1; // -1 disables clock events
+	void enable_clock_events_2(int index){
+		clock_input_2 = index;
+	}
+	
+	bool current_state_is_high_2;
+	bool last_state_is_low_2 = true;
+	void run_clock_events_2(){
+		
+		if(clock_input_2 > -1){ // by default program assumes no clock exists
+			
+			current_state_is_high_2 = input_values[clock_input_2]; // for legibility
+			
+			// only run once per clock cycle
+			// run on rising edge of incoming clock signal
+			if(current_state_is_high_2 & last_state_is_low_2){
+				if(debug) Serial.println ("Clock 2 has risen.");
+				on_clock_rise_2_do();
+				last_state_is_low_2 = false;
+			}
+			
+			// only run once per clock cycle
+			// run on falling edge of incoming clock signal
+			if(!current_state_is_high_2 & !last_state_is_low_2){
+				if(debug) Serial.println ("Clock 2 has fallen.");
+				on_clock_fall_2_do();
+				last_state_is_low_2 = true;
+			}
+		}
+	}
+	
+	///////////////////////////////////////////////////////////////////////////////
+	/// This is a generic way to write digital outputs or use MCP4822 DAC
+	///////////////////////////////////////////////////////////////////////////////
+	
+	void write_outputs(){
 		
 		dac_event = 0;
 		for(int i = 0; i < NUMBER_OF_OUTPUTS; i++){
@@ -191,7 +229,7 @@ class EuroStep{
 			if(output_mode_is_analog[i]){
 				
 				// the program cannot currently handle more than 4 analog
-				//  outputs since only 2x DACs are set up in memory
+				//	outputs since only 2x DACs are set up in memory
 				dac_event++;
 				assert(dac_event <= 4);
 				
@@ -252,36 +290,37 @@ class EuroStep{
 			}
 			
 			// whether output mode is analog or digital,
-			//  track history to avoid state changes when unnecessary
+			//	track history to avoid state changes when unnecessary
 			output_values_old[i] = output_values[i];
 		}
 	}
 	
-    ///////////////////////////////////////////////////////////////////////////////
-    /// This runs through all sub-routines
-    ///////////////////////////////////////////////////////////////////////////////
-    
-    void step(){
+	///////////////////////////////////////////////////////////////////////////////
+	/// This runs through all sub-routines
+	///////////////////////////////////////////////////////////////////////////////
+	
+	void step(){
 		
 		read_inputs();
 		read_pots();
 		read_switches();
 		run_clock_events();
+		run_clock_events_2();
 		on_step_do();
 		write_outputs();
 		if(debug) delay(250);
 	}
 	
-    ///////////////////////////////////////////////////////////////////////////////
-    /// Provide helper functions for timers
-    ///////////////////////////////////////////////////////////////////////////////
+	///////////////////////////////////////////////////////////////////////////////
+	/// Provide helper functions for timers
+	///////////////////////////////////////////////////////////////////////////////
 	
-    long int last_timer;
-    void reset_timer(){
+	long int last_timer;
+	void reset_timer(){
 		last_timer = millis();
 	}
 	
-    long int get_timer(){
+	long int get_timer(){
 		return(millis() - last_timer);
 	}
 };
