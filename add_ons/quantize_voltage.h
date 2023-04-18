@@ -31,41 +31,41 @@ int quantize_voltage(int mV, bool SCALE[12], bool debug = false){
 			octave_shift = octave_shift_c;
 			break;
 			
-		// if both notes are in scale, select the one that is closest
-		}else if(SCALE[floortone] == 1 & SCALE[ceiltone] == 1){
-		
-		if(round(residTones) == floor(residTones)){
-		outTone = floortone;
-		octave_shift = octave_shift_f;
-		break;
-		}else{
-		outTone = ceiltone;
-		octave_shift = octave_shift_c;
-		break;
+			// if both notes are in scale, select the one that is closest
+			}else if(SCALE[floortone] == 1 & SCALE[ceiltone] == 1){
+			
+			if(round(residTones) == floor(residTones)){
+				outTone = floortone;
+				octave_shift = octave_shift_f;
+				break;
+				}else{
+				outTone = ceiltone;
+				octave_shift = octave_shift_c;
+				break;
+			}
+			
+			// if neither note is in scale, look beyond to +/- 1 semi-tone
+			}else{
+			
+			floortone -= 1;
+			if(floortone == -1){ // if out-of-bounds on low end
+				floortone = 11; // so move down to 11 which is 12th note, i.e., is B
+				octave_shift_f -= 1; // track you have moved down an octave
+			}
+			
+			ceiltone += 1;
+			if(ceiltone == 12){ // if out-of-bounds on high end
+				ceiltone = 0; // so move up to 0 which is 1st note, i.e., is C
+				octave_shift_c += 1; // track you have moved up an octive
+			}
 		}
-		
-		// if neither note is in scale, look beyond to +/- 1 semi-tone
-		}else{
-		
-		floortone -= 1;
-		if(floortone == -1){ // if out-of-bounds on low end
-		floortone = 11; // so move down to 11 which is 12th note, i.e., is B
-		octave_shift_f -= 1; // track you have moved down an octave
-		}
-		
-		ceiltone += 1;
-		if(ceiltone == 12){ // if out-of-bounds on high end
-		ceiltone = 0; // so move up to 0 which is 1st note, i.e., is C
-		octave_shift_c += 1; // track you have moved up an octive
-		}
-		}
-		}
-		
-		// convert rounded tone into outgoing voltage
-		int base_volts = mV / 1000;
-		int new_mV = base_volts*1000 + octave_shift*1000 + outTone*83.3333;
-		
-		if(debug){
+	}
+	
+	// convert rounded tone into outgoing voltage
+	int base_volts = mV / 1000;
+	int new_mV = base_volts*1000 + octave_shift*1000 + outTone*83.3333;
+	
+	if(debug){
 		Serial.print("Original (mV): ");
 		Serial.println (mV);
 		Serial.print("Residue (mV): ");
@@ -80,8 +80,7 @@ int quantize_voltage(int mV, bool SCALE[12], bool debug = false){
 		Serial.println (outTone);
 		Serial.print("New voltage: ");
 		Serial.println (new_mV);
-		}
-		
-		return new_mV;
-		}
-				
+	}
+	
+	return new_mV;
+}
