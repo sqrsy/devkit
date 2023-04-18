@@ -1,5 +1,15 @@
 int quantize_voltage(int mV, bool SCALE[12], bool debug = false){
 	
+	// do not quantize if there are no notes selected
+	//  (this avoids an infinite while loop)
+	int number_of_switches = 0;
+	for (int i = 0; i < 12; i++){
+		number_of_switches += SCALE[i];
+	}
+	if(number_of_switches == 0){
+		return(mV);
+	}
+	
 	int octave_shift_f = 0;
 	int octave_shift_c = 0;
 	int octave_shift = 0; // whether quantized tone is an octave above / below
