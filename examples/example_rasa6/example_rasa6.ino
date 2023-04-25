@@ -1,7 +1,7 @@
 //#include "/home/thom/Dropbox/Hobbies/Synths/Arduino/devkit/EuroStep/hardware/rasa6.h"
 //#include "/home/thom/Dropbox/Hobbies/Synths/Arduino/devkit/EuroStep/EuroStep.h"
-#include "C:/Users/Thom/Dropbox/Hobbies/Synths/Arduino/devkit/EuroStep/hardware/rasa6.h"
-#include "C:/Users/Thom/Dropbox/Hobbies/Synths/Arduino/devkit/EuroStep/EuroStep.h"
+#include "C:/Users/61436/Dropbox/Hobbies/Synths/Arduino/devkit/EuroStep/hardware/rasa6.h"
+#include "C:/Users/61436/Dropbox/Hobbies/Synths/Arduino/devkit/EuroStep/EuroStep.h"
 
 // DERIVE NEW CLASS WITH USER-DEFINED FUNCTIONALITY
 class make_module : public EuroStep::EuroStep {
