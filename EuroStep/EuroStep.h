@@ -1,3 +1,61 @@
+/*
+Class Name: EuroStep
+
+Purpose: Manage events that get called often by synthesis programs.
+
+Dependencies: Hardware specific pin configuration. See 'hardware/' for examples.
+
+Use: Create a sub-class for each new program, then over-ride any of the virtual functions:
+-- on_start_do(): routines called once when program starts
+-- on_clock_rise_do(): routines called whenever clock rises
+-- -- User must enable the clock by assigning an INPUT via 'enable_clock_events(INPUT)';
+-- on_clock_fall_do(): routines called whenever clock falls
+-- -- Clock must be enabled, as above.
+-- on_clock_rise_2_do(): routines called whenever the second clock rises
+-- -- User must enable the clock by assigning an INPUT2 via 'enable_clock_Events_2(INPUT2)';
+-- on_clock_fall_do(): routines called whenever the second clock falls
+-- -- Clock must be enabled, as above.
+-- on_step_do(): routines called every step in the main program loop
+
+Incoming Values: The following member values are populated automatically during each step,
+and can be used by the virtual functions:
+-- input_values[]: an integer array of the read input values (in mV)
+-- pot_values[]: an integer array of the read pot values (in percent, from 0-100)
+-- switch_values[]: a bool array of the current switch states
+
+Outgoing Values: The following functions are used to write out data from the Arduino,
+and can be used by the virtual functions:
+-- send_to_output(channel, value): writes a value to an output channel
+-- -- if channel number is setup as analog, value is sent to DAC as mV (range 0-4 V)
+-- -- if channel number is setup as digital, value is sent by digitalWrite()
+
+Setup Instructions: The following member values should be assigned during setup:
+-- input_mode_is_analog[]: a bool array whether each input is used as analog input
+-- -- if false, the input voltage is compared against 'input_is_true_threshold' (default is 500 mV)
+-- output_mode_is_analog[]: a bool array whether each output is used as analog output
+-- -- if true, the write instructions will get sent to the MCP4822 to perform DAC (range 0-4 V)
+-- -- note: the MCP4822 can support two analog outputs per chip (max two MCP4822 chips)
+-- debug: a bool that toggles whether to delay after each step and print to console
+-- start(): required to initialise class
+
+Example:
+
+void setup() {
+  module.input_mode_is_analog[0] = false;  // if input is readAnalog()
+  module.input_mode_is_analog[1] = false;
+  module.enable_clock_events(0);  // treat input 0 as a clock signal (optional)
+  module.enable_clock_events_2(1);
+  module.output_mode_is_analog[0] = true;  // send output 0 to DAC
+  module.output_mode_is_analog[1] = true;  // send output 1 to DAC
+  module.debug = false;                    // toggle debug
+  module.start();                          // required to initialise pins
+}
+
+void loop() {
+  module.step();  // runs all user-defined *_do() calls
+}
+*/
+
 #include <assert.h>
 #include "backend/backend.h"
 #include "chips/mcp4822.h"
