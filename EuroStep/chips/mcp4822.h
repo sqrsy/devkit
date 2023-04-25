@@ -49,29 +49,29 @@ void update_dac_code(bool data[16], long outVolt, bool channel, bool verbose = f
   }
 }
 
-void write_dac_code(bool data[16], int PIN_CS, int PIN_SCK, int PIN_SDI, int PIN_LDAC) {
+void write_dac_code(bool data[16], int pin_cs, int pin_sck, int pin_sdi, int pin_ldac) {
 
   // get ready to write
-  digitalWrite(PIN_CS, LOW);
+  digitalWrite(pin_cs, LOW);
 
   // write 16 bits to DAC
   for (int i = 0; i < 16; i++) {
     if (data[i] == 1) {
-      digitalWrite(PIN_SDI, HIGH);
+      digitalWrite(pin_sdi, HIGH);
     } else {
-      digitalWrite(PIN_SDI, LOW);
+      digitalWrite(pin_sdi, LOW);
     }
-    digitalWrite(PIN_SCK, HIGH);
-    digitalWrite(PIN_SCK, LOW);
+    digitalWrite(pin_sck, HIGH);
+    digitalWrite(pin_sck, LOW);
   }
 
   // finish write
-  digitalWrite(PIN_CS, HIGH);
-  if (PIN_LDAC > -1) {
-    digitalWrite(PIN_LDAC, LOW);
-    digitalWrite(PIN_LDAC, HIGH);
+  digitalWrite(pin_cs, HIGH);
+  if (pin_ldac > -1) {
+    digitalWrite(pin_ldac, LOW);
+    digitalWrite(pin_ldac, HIGH);
   }
 
-  delayMicroseconds(1);  // make sure PIN_CS stays high for a tiny bit
+  delayMicroseconds(1);  // make sure pin_cs stays high for a tiny bit
                          // this is to avoid trouble writing chan B right after chan A
 }
