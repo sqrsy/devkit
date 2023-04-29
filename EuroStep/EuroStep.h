@@ -17,43 +17,33 @@ Use: Create a sub-class for each new program, then over-ride any of the virtual 
 -- -- Clock must be enabled, as above.
 -- on_step_do(): routines called every step in the main program loop
 
-Incoming Values: The following member values are populated automatically during each step,
-and can be used by the virtual functions:
--- input_values[]: an integer array of the read input values (in mV)
--- pot_values[]: an integer array of the read pot values (in percent, from 0-100)
--- switch_values[]: a bool array of the current switch states
+Incoming Values: Any inputs, pots, or switches get read automatically during each step.
+The following getters can be used by the virtual functions:
+-- get_input(index): returns the i-th read input values (in mV)
+-- get_pot(index): returns the i-th read pot values (in percent, from 0-100)
+-- get_switch(index): returns the i-th switch state (as a bool)
 
-Outgoing Values: The following functions are used to write out data from the Arduino,
-and can be used by the virtual functions:
--- send_to_output(channel, value): writes a value to an output channel
--- -- if channel number is setup as analog, value is sent to DAC as mV (range 0-4 V)
--- -- if channel number is setup as digital, value is sent by digitalWrite()
+Outgoing Values: Any outputs get written automatically during each step.
+The following setters and can be used by the virtual functions:
+-- set_output(index, value): writes a value to an output channel
+-- -- if index number is setup as analog, value is sent to DAC as mV (range 0-4 V)
+-- -- if index number is setup as digital, value is sent by digitalWrite()
+-- send_to_output(index, value): alias for set_output()
 
-Setup Instructions: The following member values should be assigned during setup:
--- input_mode_is_analog[]: a bool array whether each input is used as analog input
+Setup Instructions: The following setters should be assigned in during setup:
+-- set_input_to_analog(index, value): toggles whether the i-th input is used as analog input
 -- -- if false, the input voltage is compared against 'input_is_true_threshold' (default is 500 mV)
--- output_mode_is_analog[]: a bool array whether each output is used as analog output
+-- -- note: false by default
+-- set_output_to_analog(index, value): toggles whether the i-th output is used as analog output
 -- -- if true, the write instructions will get sent to the MCP4822 to perform DAC (range 0-4 V)
 -- -- note: the MCP4822 can support two analog outputs per chip (max two MCP4822 chips)
--- debug: a bool that toggles whether to delay after each step and print to console
--- start(): required to initialise class
+-- -- note: false by default
+-- set_debug(value): sets whether to delay after each step and print to console
+-- -- note: true by default
 
-Example:
-
-void setup() {
-  module.input_mode_is_analog[0] = false;  // if input is readAnalog()
-  module.input_mode_is_analog[1] = false;
-  module.enable_clock_events(0);  // treat input 0 as a clock signal (optional)
-  module.enable_clock_events_2(1);
-  module.output_mode_is_analog[0] = true;  // send output 0 to DAC
-  module.output_mode_is_analog[1] = true;  // send output 1 to DAC
-  module.debug = false;                    // toggle debug
-  module.start();                          // required to initialise pins
-}
-
-void loop() {
-  module.step();  // runs all user-defined *_do() calls
-}
+Use: The following functions are required to run the program:
+-- start(): put in setup to initialise class
+-- step(): put in main to run the program
 */
 
 #include <assert.h>
@@ -65,18 +55,23 @@ class EuroStep {
 
 public:
 
-  bool debug = true;
-  int input_is_true_threshold = 500;
-  bool input_mode_is_analog[NUMBER_OF_INPUTS];
+  // incoming values
   int input_values[NUMBER_OF_INPUTS];      // the input as averaged over 8 readings
   int input_history[NUMBER_OF_INPUTS][8];  // the last 8 readings
   int pot_values[NUMBER_OF_POTS];
   bool switch_values[NUMBER_OF_SWITCHES];
+
+  // outgoing values
   int output_values_old[NUMBER_OF_OUTPUTS];
-  bool output_mode_is_analog[NUMBER_OF_OUTPUTS];
   int output_values[NUMBER_OF_OUTPUTS];
   bool dac_code[16];  // used if output_mode_is_analog
   int dac_event;      // helps track which DAC to write
+
+  // options
+  bool debug = true;
+  int input_is_true_threshold = 500;
+  bool input_mode_is_analog[NUMBER_OF_INPUTS] = { 0 };
+  bool output_mode_is_analog[NUMBER_OF_OUTPUTS] = { 0 };
 
   ///////////////////////////////////////////////////////////////////////////////
   /// Hardware variables
@@ -93,8 +88,34 @@ public:
   /// Getters and setters
   ///////////////////////////////////////////////////////////////////////////////
 
+  // incoming values
+  int get_input(int index) {
+    return input_values[index];
+  }
+  int get_pot(int index) {
+    return pot_values[index];
+  }
+  int get_switch(int index) {
+    return switch_values[index];
+  }
+
+  // outgoing values
+  void set_output(int index, int value) {
+    output_values[index] = value;
+  }
   void send_to_output(int index, int value) {
     output_values[index] = value;
+  }
+
+  // options
+  void set_input_to_analog(int index, bool value = true) {
+    input_mode_is_analog[index] = value;
+  }
+  void set_output_to_analog(int index, bool value = true) {
+    output_mode_is_analog[index] = value;
+  }
+  void set_debug(bool value = true) {
+    debug = value;
   }
 
   ///////////////////////////////////////////////////////////////////////////////
@@ -369,13 +390,11 @@ public:
   ///////////////////////////////////////////////////////////////////////////////
 
   void start() {
-
     initialise_pins();
     on_start_do();
   }
 
   void step() {
-
     read_inputs();
     read_pots();
     read_switches();
