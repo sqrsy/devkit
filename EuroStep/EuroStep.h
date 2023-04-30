@@ -41,9 +41,37 @@ Setup Instructions: The following setters should be assigned in during setup:
 -- set_debug(value): sets whether to delay after each step and print to console
 -- -- note: true by default
 
-Use: The following functions are required to run the program:
+The following functions are required to run the program:
 -- start(): put in setup to initialise class
 -- step(): put in main to run the program
+
+Example:
+
+class make_new_module : public EuroStep::EuroStep {
+public:
+  void on_step_do() {
+    // your program here
+  }
+};
+
+make_new_module module;  // make the class
+
+// RUNS ONCE
+void setup() {
+  module.set_input_to_analog(0, false);
+  module.set_input_to_analog(1, false);
+  module.enable_clock_events(0);         // treat input 0 as a clock signal (optional)
+  module.enable_clock_events_2(1);       // treat input 1 as second clock signal (optional)
+  module.set_output_to_analog(0, true);  // send output 0 to DAC
+  module.set_output_to_analog(1, true);  // send output 1 to DAC
+  module.set_debug(false);               // toggle debug
+  module.start();                        // required to initialise pins
+}
+
+// RUNS EVERY STEP
+void loop() {
+  module.step();  // runs all user-defined *_do() calls
+}
 */
 
 #include <assert.h>
