@@ -1,9 +1,27 @@
+/*
+Class Name: Timer
+
+Purpose: Create a timer that counts up like a stop watch.
+
+Dependencies: None.
+
+Use: Create an instance of the class and configure settings, then run:
+-- get_timer(): returns how much time has passed since reset_timer() was called
+-- reset_timer(): resets the timer to 0
+
+You may wish to configure the following settings:
+-- use_millis(): use milliseconds for the timer (default)
+-- use_micros(): use microseconds for the timer
+*/
+
 class Timer {
 
-public:
+private:
 
   bool time_in_micros = false;
   unsigned long last_timer = 0;
+
+public:
 
   void use_micros() {
     time_in_micros = true;
