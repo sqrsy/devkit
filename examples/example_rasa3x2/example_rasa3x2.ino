@@ -35,27 +35,33 @@ public:
   // STUFF THAT HAPPENS EVERY STEP
   void on_step_do() {
 
-    // switches set speed of envelope rise / fall
-    Env1.fast_A = switch_values[0];
-    Env1.fast_DR = switch_values[1];
-    Env2.fast_A = switch_values[2];
-    Env2.fast_DR = switch_values[3];
+    // Set speed up for Envelopes based on switch state
+    // -- note: by computing (bool*4 + 1), step pre-factor is either 1 or 5
+    // -- note: decay and release share same values
+    Env1.set_ADSR_step(0, switch_values[0] * 4 + 1);
+    Env1.set_ADSR_step(1, switch_values[1] * 4 + 1);
+    Env1.set_ADSR_step(3, switch_values[1] * 4 + 1);
+    Env2.set_ADSR_step(0, switch_values[2] * 4 + 1);
+    Env2.set_ADSR_step(1, switch_values[3] * 4 + 1);
+    Env2.set_ADSR_step(3, switch_values[3] * 4 + 1);
 
     // pots determine ATTACK, SUSTAIN, and DECAY/RELEASE (shared)
-    Env1.rate_A = max(1, pot_values[0]);              // attack rate ranges 1-100
-    Env1.sustain_limit = max(1, pot_values[1]) * 40;  // sustain level ranges 40-4000
-    Env1.rate_DR = max(1, pot_values[2]);             // decay rate ranges 1-100
-    Env2.rate_A = max(1, pot_values[3]);
-    Env2.sustain_limit = max(1, pot_values[4]) * 40;
-    Env2.rate_DR = max(1, pot_values[5]);
+    Env1.set_ADSR_rate(0, pot_values[0]);                // attack rate ranges 1-100
+    Env1.set_ADSR_rate(1, pot_values[1]);                // decay rate ranges 1-100
+    Env1.set_ADSR_rate(3, pot_values[1]);                // release = decay
+    Env1.set_sustain_level(max(1, pot_values[2]) * 40);  // sustain level ranges 40-4000
+    Env2.set_ADSR_rate(0, pot_values[3]);                // attack rate ranges 1-100
+    Env2.set_ADSR_rate(1, pot_values[4]);                // decay rate ranges 1-100
+    Env2.set_ADSR_rate(3, pot_values[4]);                // release = decay
+    Env2.set_sustain_level(max(1, pot_values[5]) * 40);  // sustain level ranges 40-4000
 
     // this method handles both rise and fall, with timers
     //  set up by turn_on_gate() and turn_off_gate()
     Env1.advance_envelope();
     Env2.advance_envelope();
 
-    send_to_output(0, Env1.current_size);
-    send_to_output(1, Env2.current_size);
+    send_to_output(0, Env1.get_envelope_size());
+    send_to_output(1, Env2.get_envelope_size());
   }
 };
 
@@ -63,14 +69,14 @@ make_Envelope_ADSR module;  // make the class
 
 // RUNS ONCE
 void setup() {
-  module.input_mode_is_analog[0] = false;  // if input is readAnalog()
-  module.input_mode_is_analog[1] = false;
-  module.enable_clock_events(0);  // treat input 0 as a clock signal (optional)
-  module.enable_clock_events_2(1);
-  module.output_mode_is_analog[0] = true;  // send output 0 to DAC
-  module.output_mode_is_analog[1] = true;  // send output 1 to DAC
-  module.debug = false;                    // toggle debug
-  module.start();                          // required to initialise pins
+  module.set_input_to_analog(0, false);
+  module.set_input_to_analog(1, false);
+  module.enable_clock_events(0);         // treat input 0 as a clock signal (optional)
+  module.enable_clock_events_2(1);       // treat input 1 as second clock signal (optional)
+  module.set_output_to_analog(0, true);  // send output 0 to DAC
+  module.set_output_to_analog(1, true);  // send output 1 to DAC
+  module.set_debug(false);               // toggle debug
+  module.start();                        // required to initialise pins
 }
 
 // RUNS EVERY STEP

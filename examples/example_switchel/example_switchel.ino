@@ -3,7 +3,7 @@
 //#include "/home/thom/Dropbox/Hobbies/Synths/Arduino/devkit/add_ons/quantize_voltage.h"
 #include "C:/Users/61436/Dropbox/Hobbies/Synths/Arduino/devkit/EuroStep/hardware/switchel-v3.h"
 #include "C:/Users/61436/Dropbox/Hobbies/Synths/Arduino/devkit/EuroStep/EuroStep.h"
-#include "C:/Users/61436/Dropbox/Hobbies/Synths/Arduino/devkit/add_ons/quantize_voltage.h"
+#include "C:/Users/61436/Dropbox/Hobbies/Synths/Arduino/devkit/EuroStep/add_ons/quantize_voltage.h"
 
 class make_Quantizer : public EuroStep::EuroStep {
 public:
