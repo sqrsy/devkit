@@ -24,8 +24,8 @@ You may wish to configure the following settings:
 -- -- note: measured size of change in 'step' percent of envelope range
 
 The following settings are relevant from the Timer class:
+-- use_millis(): use milliseconds as the time units for the set_ADSR_rate (default)
 -- use_micros(): use microseconds as the time units for the set_ADSR_rate
--- use_millis(): use milliseconds as the time units for the set_ADSR_rate
 */
 
 class Envelope : public Timer {
@@ -46,13 +46,13 @@ private:
   // the current size of envelope to send to analog out
   int current_size;
 
-public:
-
   // how fast to make each stage (in time units waited but changing envelope by 1%)
   int ADSR_rate[4] = { -1, -1, -1, -1 };
 
   // how much to speed up each stage (optional)
   int ADSR_step[4] = { 1, 1, 1, 1 };
+
+public:
 
   ///////////////////////////////////////////////////////////////////////////////
   /// Getters and setters
