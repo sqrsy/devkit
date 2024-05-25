@@ -35,6 +35,7 @@ private:
   // gate used to trigger envelope and manage sustain
   int gate_on = false;
   bool ADSR_progress[4] = { false, false, false, false };
+  bool ADSR_was_interrupted = false;  // used to handle ADSR interruption
 
   // min, max, and sustain level
   int min_limit = 0;
@@ -46,7 +47,7 @@ private:
   // the current size of envelope to send to analog out
   int current_size;
 
-  // how fast to make each stage (in time units waited but changing envelope by 1%)
+  // how fast to make each stage (in time units waited before changing envelope by 1%)
   int ADSR_rate[4] = { -1, -1, -1, -1 };
 
   // how much to speed up each stage (optional)
@@ -85,12 +86,18 @@ public:
   ///////////////////////////////////////////////////////////////////////////////
 
   void turn_on_gate() {
+
+    // if last ADSR was interrupted,
+    // safely end last ADSR as part of new attack
+    if (current_size > min_limit) {
+      ADSR_was_interrupted = true;
+    }
+
     gate_on = true;
     ADSR_progress[0] = true;
     ADSR_progress[1] = false;
     ADSR_progress[2] = false;
     ADSR_progress[3] = false;
-    current_size = min_limit;  // reset envelope at bottom
     reset_timer();
   }
 
@@ -104,7 +111,19 @@ public:
   /// Attack stage
   ///////////////////////////////////////////////////////////////////////////////
 
-  void attack() {
+  void end_ADSR_safely() {
+
+    // end ADSR wherever it is, quickly but not instantly
+    // no need for timer, want this to happen fast!
+    current_size -= 0.15 * delta_limit;
+
+    if (current_size <= min_limit) {
+      current_size = min_limit;
+      ADSR_was_interrupted = false;
+    }
+  }
+
+  void continue_attack_as_normal() {
 
     if (get_timer() > ADSR_rate[0]) {
       current_size += .01 * ADSR_step[0] * delta_limit;
@@ -115,6 +134,15 @@ public:
       current_size = max_limit;
       ADSR_progress[0] = false;  // attack off
       ADSR_progress[1] = true;   // decay on
+    }
+  }
+
+  void attack() {
+
+    if (ADSR_was_interrupted) {
+      end_ADSR_safely();
+    } else {
+      continue_attack_as_normal();
     }
   }
 
