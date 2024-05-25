@@ -42,15 +42,16 @@ private:
   int playback_step = 1;
 
   // load a reference "file" to sample
-  //signed short audio[256] = { 0 };  // 44100 would be 1 second of 44100 Hz sampled audio
   short* audio;
   int audio_length = 0;
 
   // the position along the playback reference file
+  int current_value = 0;
   int current_position = 0;
   int start_position = 0;
 
   // other args
+  bool now_restarting_safely = false;  // protect from interruption
   bool pause = false;
   bool loop = false;
 
@@ -68,13 +69,6 @@ public:
     playback_step = value;
   }
 
-  // void set_audio(int *audio_array, int audio_array_length) {
-  //   audio_length = audio_array_length;
-  //   for (int i = 0; i < audio_length; i++) {
-  //     audio[i] = audio_array[i];
-  //   }
-  // }
-
   void set_audio(int* audio_array, int audio_array_length) {
     audio = audio_array;  // just point to new file, which will already live in RAM
     audio_length = audio_array_length;
@@ -85,11 +79,7 @@ public:
   }
 
   int get_current_value() {
-    if (current_position == start_position) {
-      return 0;  // return 0 after "rewind" until Playback restarts
-    } else {
-      return audio[current_position];
-    }
+    return current_value;
   }
 
   ~Playback() {
@@ -125,6 +115,31 @@ public:
   void restart_playback() {
     rewind_playback();
     unpause_playback();
+    now_restarting_safely = true;
+  }
+
+  void stop_playback_safely() {
+    // end Playback wherever it is, quickly but not instantly
+    // no need for timer, want this to happen fast!
+    if (current_value >= 0) {  // if current value is positive, decrease it
+      current_value -= 250;
+      if (current_value <= 0) {  // if now at zero
+        now_restarting_safely = false;
+      }
+    } else {  // if current value is negative, increase it
+      current_value += 250;
+      if (current_value >= 0) {  // if now at zero
+        now_restarting_safely = false;
+      }
+    }
+  }
+
+  void continue_playback() {
+    if (get_timer() > playback_rate) {
+      current_position += 1;
+      current_value = audio[current_position];
+      reset_timer();
+    }
   }
 
   ///////////////////////////////////////////////////////////////////////////////
@@ -139,17 +154,16 @@ public:
     }
 
     if (!pause) {
-
-      if (get_timer() > playback_rate) {
-        current_position += 1;
-        reset_timer();
-      }
-
-      if (current_position >= audio_length) {  // prevent overflow
-        if (loop) {
-          restart_playback();
-        } else {
-          rewind_playback();
+      if (now_restarting_safely) {
+        stop_playback_safely();
+      } else {
+        continue_playback();
+        if (current_position >= audio_length) {  // prevent overflow
+          if (loop) {
+            restart_playback();
+          } else {
+            rewind_playback();
+          }
         }
       }
     }
