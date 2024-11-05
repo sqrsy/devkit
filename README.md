@@ -4,4 +4,4 @@ This folder contains code that makes it easier for me to write programs for the 
 
 # Disclaimer
 
-All files are provided without any guarentee. If you notice a mistake, please submit an Issue and I will fix it.
+All files are provided without any guarantee. If you notice a mistake, please submit an Issue and I will fix it.
