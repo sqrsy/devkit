@@ -94,7 +94,7 @@ public:
     }
 
     gate_on = true;
-    ADSR_progress[0] = true;
+    ADSR_progress[0] = true;  // attack begins
     ADSR_progress[1] = false;
     ADSR_progress[2] = false;
     ADSR_progress[3] = false;
@@ -103,7 +103,10 @@ public:
 
   void turn_off_gate() {
     gate_on = false;
-    ADSR_progress[2] = false;  // now that gate is off, unpause envelope to start release
+    ADSR_progress[0] = false;
+    ADSR_progress[1] = false;
+    ADSR_progress[2] = false;
+    ADSR_progress[3] = true;  // release begins
     reset_timer();
   }
 
@@ -127,13 +130,14 @@ public:
 
     if (get_timer() > ADSR_rate[0]) {
       current_size += .01 * ADSR_step[0] * delta_limit;
+      if (current_size >= max_limit) {
+        current_size = max_limit;
+        ADSR_progress[0] = false;
+        ADSR_progress[1] = true;  // decay begins
+        ADSR_progress[2] = false;
+        ADSR_progress[3] = false;
+      }
       reset_timer();
-    }
-
-    if (current_size >= max_limit) {
-      current_size = max_limit;
-      ADSR_progress[0] = false;  // attack off
-      ADSR_progress[1] = true;   // decay on
     }
   }
 
@@ -154,18 +158,14 @@ public:
 
     if (get_timer() > ADSR_rate[1]) {
       current_size -= .01 * ADSR_step[1] * delta_limit;
-      reset_timer();
-    }
-
-    if (current_size <= sustain_level) {
-      current_size = sustain_level;
-      if (gate_on) {
+      if (current_size <= sustain_level) {
+        current_size = sustain_level;  // use whatever sustain is set when decay ends
+        ADSR_progress[0] = false;
         ADSR_progress[1] = false;
-        ADSR_progress[2] = true;  // turn on sustain
-      } else {
-        ADSR_progress[1] = false;
-        ADSR_progress[3] = true;  // go straight to release
+        ADSR_progress[2] = true;  // sustain begins
+        ADSR_progress[3] = false;
       }
+      reset_timer();
     }
   }
 
@@ -175,20 +175,21 @@ public:
 
   void sustain() {
 
-    // do not change current_size
-    ADSR_progress[3] = true;  // ready release for once sustain stops
+    // do nothing
   }
 
   void release() {
 
     if (get_timer() > ADSR_rate[3]) {
       current_size -= .01 * ADSR_step[3] * delta_limit;
+      if (current_size <= min_limit) {
+        current_size = min_limit;
+        ADSR_progress[0] = false;
+        ADSR_progress[1] = false;
+        ADSR_progress[2] = false;
+        ADSR_progress[3] = false;  // stop everything
+      }
       reset_timer();
-    }
-
-    if (current_size <= min_limit) {
-      current_size = min_limit;
-      ADSR_progress[3] = false;  // stop envelope
     }
   }
 
