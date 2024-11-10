@@ -8,13 +8,14 @@ Dependencies: None.
 Use: Create an instance of the class and configure settings, then run:
 -- enable_note(j): Add j-th note to quantiser scale.
 -- disable_note(j): Remove j-th note from quantiser scale.
--- run(int mV): Quantise the voltage.
+-- run(int incoming_cv): Quantise the voltage (in mV).
+-- get_quantised_cv(): Get result.
 */
 
 // Convert voltage to MIDI note number
-int convert_mV_to_note_number(int mV, int rounding_bias) {
+int convert_mV_to_note_number(int mV) {
 
-  float note_to_round = (mV + rounding_bias) / 83.3333f;
+  float note_to_round = mV / 83.3333f;
   int note_number = round(note_to_round);
   return note_number;
 }
@@ -54,18 +55,14 @@ int find_nearest_note_in_scale(int note_number, bool scale[12]) {
   }
 }
 
-class Quantizer {
+class Quantiser {
 
 private:
 
   bool scale[12] = { false };
-  int incoming_cv = 0;
   int incoming_tone = 0;
-  int outgoing_tone = 0;
-  int outgoing_cv = 0;
-
-  // used to prevent rapid note switching due to rounding of unstable input CV
-  float rounding_bias = 15;  // in mV
+  int quantised_tone = 0;
+  int quantised_cv = 0;
 
   // used to skip quantiser when no notes are set
   int number_of_active_notes = 0;
@@ -97,6 +94,8 @@ public:
       number_of_active_notes += scale[i];
       if (number_of_active_notes == 0) {
         nothing_to_quantise = true;
+      } else {
+        nothing_to_quantise = false;
       }
     }
   }
@@ -105,31 +104,23 @@ public:
   /// Main steps for quantiser
   ///////////////////////////////////////////////////////////////////////////////
 
-  // Set the incoming CV in millivolts
-  void set_incoming_cv(int cv) {
-    incoming_cv = cv;
+  int run(int incoming_cv) {
+
+    if (nothing_to_quantise) {
+      quantised_cv = incoming_cv;
+    } else {
+      incoming_tone = convert_mV_to_note_number(incoming_cv);
+      quantised_tone = find_nearest_note_in_scale(incoming_tone, scale);
+      quantised_cv = convert_note_number_to_mV(quantised_tone);
+    }
   }
 
-  // Perform the quantization of the input CV
-  int do_quantise_cv() {
-
-    incoming_tone = convert_mV_to_note_number(incoming_cv, rounding_bias);
-    outgoing_tone = find_nearest_note_in_scale(incoming_tone, scale);
-    outgoing_cv = convert_note_number_to_mV(outgoing_tone);
-  }
+  ///////////////////////////////////////////////////////////////////////////////
+  /// Get result
+  ///////////////////////////////////////////////////////////////////////////////
 
   // Get the quantized CV in millivolts
   int get_quantised_cv() {
-    return outgoing_cv;
-  }
-
-  ///////////////////////////////////////////////////////////////////////////////
-  /// Single method to run all quantiser steps
-  ///////////////////////////////////////////////////////////////////////////////
-
-  int run(int cv) {
-    set_incoming_cv(cv);
-    do_quantise_cv();
-    get_quantised_cv();
+    return quantised_cv;
   }
 };
