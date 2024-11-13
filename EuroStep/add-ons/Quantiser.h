@@ -12,21 +12,6 @@ Use: Create an instance of the class and configure settings, then run:
 -- get_quantised_cv(): Get result.
 */
 
-// Convert voltage to MIDI note number
-int convert_mV_to_note_number(int mV) {
-
-  float note_to_round = mV / 83.3333f;
-  int note_number = round(note_to_round);
-  return note_number;
-}
-
-// Convert MIDI note number to voltage
-int convert_note_number_to_mV(int note_number) {
-
-  int mV = note_number * 83.3333f;
-  return mV;
-}
-
 // Quantise note number to next nearest note number
 int find_nearest_note_in_scale(int note_number, bool scale[12]) {
 
@@ -109,9 +94,9 @@ public:
     if (nothing_to_quantise) {
       quantised_cv = incoming_cv;
     } else {
-      incoming_tone = convert_mV_to_note_number(incoming_cv);
+      incoming_tone = map_mV_to_note_number(incoming_cv);
       quantised_tone = find_nearest_note_in_scale(incoming_tone, scale);
-      quantised_cv = convert_note_number_to_mV(quantised_tone);
+      quantised_cv = map_note_number_to_mV(quantised_tone);
     }
   }
 
