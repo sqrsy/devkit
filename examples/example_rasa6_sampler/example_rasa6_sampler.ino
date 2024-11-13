@@ -1,6 +1,6 @@
 #include "C:/Users/Thom/Dropbox/Hobbies/Electronics/GitHub/devkit/EuroStep/hardware/rasa6.h"
 #include "C:/Users/Thom/Dropbox/Hobbies/Electronics/GitHub/devkit/EuroStep/EuroStep.h"
-#include "C:/Users/Thom/Dropbox/Hobbies/Electronics/GitHub/devkit/EuroStep/modules/Playback.h"
+#include "C:/Users/Thom/Dropbox/Hobbies/Electronics/GitHub/devkit/EuroStep/add-ons/Playback.h"
 #include "example_file.h"
 
 // DERIVE NEW CLASS WITH USER-DEFINED FUNCTIONALITY
