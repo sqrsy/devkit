@@ -75,9 +75,13 @@ void loop() {
 */
 
 #include <assert.h>
-#include "backend/backend.h"
+#include "backend/power_funcs.h"
+#include "backend/transfer_funcs.h"
+#include "backend/bit_funcs.h"
+#include "backend/map_funcs.h"
+#include "backend/read_funcs.h"
+#include "backend/Timer.h"
 #include "chips/mcp4822.h"
-#include "modules/Timer.h"
 
 class EuroStep {
 
