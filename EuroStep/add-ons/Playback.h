@@ -42,7 +42,7 @@ private:
   int playback_step = 1;
 
   // load a reference "file" to sample
-  short* audio;
+  byte* audio;
   int audio_length = 0;
 
   // the position along the playback reference file
@@ -69,7 +69,7 @@ public:
     playback_step = value;
   }
 
-  void set_audio(int* audio_array, int audio_array_length) {
+  void set_audio(byte* audio_array, int audio_array_length) {
     audio = audio_array;  // just point to new file, which will already live in RAM
     audio_length = audio_array_length;
   }
