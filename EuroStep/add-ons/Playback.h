@@ -55,6 +55,7 @@ private:
 
   // other args
   bool now_restarting_safely = false;  // protect from interruption
+  int safe_restart_increment = 16;
   bool pause = false;
   bool loop = false;
 
@@ -81,6 +82,7 @@ public:
   void set_audio(byte* audio_array, int audio_array_length) {
     audio = audio_array;  // just point to new file, which will already live in RAM
     audio_length = audio_array_length;
+    safe_restart_increment = 16;  // tested for sample values 0-255
   }
 
   void set_start_position(int value) {
@@ -135,13 +137,13 @@ public:
     // end Playback wherever it is, quickly but not instantly
     // no need for timer, want this to happen fast!
     if (current_value >= 0) {  // if current value is positive, decrease it
-      current_value -= 250;
+      current_value -= safe_restart_increment;
       if (current_value <= 0) {  // if close to zero
         current_value = 0;
         now_restarting_safely = false;
       }
     } else {  // if current value is negative, increase it
-      current_value += 250;
+      current_value += safe_restart_increment;
       if (current_value >= 0) {  // if close to zero
         current_value = 0;
         now_restarting_safely = false;
