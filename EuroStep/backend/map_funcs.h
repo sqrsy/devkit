@@ -9,8 +9,24 @@
 int map_percent_to_range(int pct, int min, int max) {
   if (pct < 0) pct = 0;
   if (pct > 100) pct = 100;
-  int result = min + (pct * (max - min) / 100);
-  return result;
+  double scale = static_cast<double>(pct) / 100.0;                 // Normalize byte_value to [0, 1]
+  int mapped_value = min + static_cast<int>(scale * (max - min));  // Scale to [min, max]
+  return mapped_value;
+}
+
+/**
+ * Maps an 8-bit byte value (0-255) to an integer within a specified range [min, max].
+ *
+ * @param byte_value An 8-bit unsigned integer (byte) with a value between 0 and 255.
+ * @param min The minimum integer value of the desired range.
+ * @param max The maximum integer value of the desired range.
+ * @return An integer value mapped to the range [min, max], based on the normalized
+ *         value of byte_value.
+ */
+int map_byte_to_range(byte byte_value, int min, int max) {
+  double scale = static_cast<double>(byte_value) / 255.0;          // Normalize byte_value to [0, 1]
+  int mapped_value = min + static_cast<int>(scale * (max - min));  // Scale to [min, max]
+  return mapped_value;
 }
 
 /**
@@ -77,8 +93,9 @@ float map_percent_to_centred_exp_range(int pct, int exp_mid, int plus_or_minus) 
  * @param max_mV The maximum millivolt value to which the mV is compared. Default is 5000 mV.
  * @return The percentage of mV relative to max_mV (0 to 100).
  */
-long map_mV_to_percent(int mV, int max_mV = 5000) {
-  int pct = (100 * mV) / (max_mV);
+int map_mV_to_percent(int mV, int max_mV = 5000) {
+  double dV = 100 * mV;
+  int pct = dV / max_mV;
   return (pct);
 }
 
@@ -97,6 +114,22 @@ float map_mV_to_Hz(int mV, int Hz_at_zero_volts) {
   int reference_voltage = log(Hz_at_zero_volts) / log(2) * 1000;
   float Hz = power_float(2, (reference_voltage + mV) / 1000.0);
   return (Hz);
+}
+
+/**
+ * Converts a frequency in Hertz (Hz) to a period in microseconds (µs).
+ *
+ * @param Hz An integer representing the frequency in Hertz (cycles per second).
+ * @return An integer representing the period in microseconds, calculated as 
+ *         the reciprocal of the frequency.
+ *
+ * @note The function assumes that the input frequency `Hz` is greater than 0 
+ *       to avoid division by zero. It also does not handle very high frequencies
+ *       where the result might be less than 1 microsecond.
+ */
+int map_Hz_to_micros(int Hz) {
+  int period_micros = 1000000 / Hz;
+  return period_micros;
 }
 
 /**
