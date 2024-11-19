@@ -7,8 +7,8 @@ void update_dac_code(bool data[16], long outVolt, bool channel, bool verbose = f
   if (outVolt < 0) {
     outVolt = 0;
   }
-  if (outVolt > 4096) {
-    outVolt = 4096;
+  if (outVolt > 4095) {
+    outVolt = 4095; // chip cannot write 4096!!
   }
 
   // set up chip options as bit code

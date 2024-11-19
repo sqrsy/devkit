@@ -92,8 +92,8 @@ public:
     }
 
     // send value to DAC
-    send_to_output(0, map_byte_to_range(Sample1.get_current_value(), 0, 4096));  //
-    send_to_output(1, map_byte_to_range(Sample2.get_current_value(), 0, 4096));
+    send_to_output(0, map_byte_to_range(Sample1.get_current_value(), 0, 4095));  //
+    send_to_output(1, map_byte_to_range(Sample2.get_current_value(), 0, 4095));
   }
 };
 
