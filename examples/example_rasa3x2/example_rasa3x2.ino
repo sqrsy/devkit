@@ -58,8 +58,8 @@ public:
     Env1.advance_envelope();
     Env2.advance_envelope();
 
-    send_to_output(0, Env1.get_envelope_size());
-    send_to_output(1, Env2.get_envelope_size());
+    send_to_output(0, Env1.get_current_value());
+    send_to_output(1, Env2.get_current_value());
   }
 };
 
