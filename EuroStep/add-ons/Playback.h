@@ -59,6 +59,11 @@ private:
   bool pause = false;
   bool loop = false;
 
+  void loop_now() {
+    rewind_playback();
+    unpause_playback();
+  }
+
 public:
 
   ///////////////////////////////////////////////////////////////////////////////
@@ -176,7 +181,7 @@ public:
       } else {
         if (current_position >= audio_length) {  // prevent overflow
           if (loop) {
-            restart_playback();
+            loop_now();
           } else {
             rewind_playback();
           }
