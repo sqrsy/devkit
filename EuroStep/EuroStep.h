@@ -8,36 +8,28 @@ Dependencies: Hardware specific pin configuration. See 'hardware/' for examples.
 Use: Create a sub-class for each new program, then over-ride any of the virtual functions:
 -- on_start_do(): routines called once when program starts
 -- on_clock_rise_do(): routines called whenever clock rises
--- -- User must enable the clock by assigning an INPUT via 'enable_clock_events(INPUT)';
 -- on_clock_fall_do(): routines called whenever clock falls
--- -- Clock must be enabled, as above.
--- on_clock_rise_2_do(): routines called whenever the second clock rises
--- -- User must enable the clock by assigning an INPUT2 via 'enable_clock_Events_2(INPUT2)';
--- on_clock_fall_do(): routines called whenever the second clock falls
--- -- Clock must be enabled, as above.
+-- on_clock_2_rise_do(): routines called whenever the second clock rises
+-- on_clock_2_fall_do(): routines called whenever the second clock falls
 -- on_step_do(): routines called every step in the main program loop
 
-Incoming Values: Any inputs, pots, or switches get read automatically during each step.
+Incoming Values: Any jacks, pots, or switches get read automatically during each step.
 The following getters can be used by the virtual functions:
--- get_input(index): returns the i-th read input values (in mV)
--- get_pot(index): returns the i-th read pot values (in percent, from 0-100)
--- get_switch(index): returns the i-th switch state (as a bool)
+-- get_jack_value(index): returns the i-th read jack values (in mV or bool)
+-- -- or can use jack_values[index]
+-- get_pot_value(index): returns the i-th read pot values (in percent, from 0-100)
+-- -- or can use pot_values[index]
+-- get_switch_value(index): returns the i-th switch state (as a bool)
+-- -- or can use switch_values[index]
 
 Outgoing Values: Any outputs get written automatically during each step.
 The following setters and can be used by the virtual functions:
--- set_output(index, value): writes a value to an output channel
--- -- if index number is setup as analog, value is sent to DAC as mV (range 0-4 V)
--- -- if index number is setup as digital, value is sent by digitalWrite()
--- send_to_output(index, value): alias for set_output()
+-- output_value_to_dac(index, value): writes to DAC output channel as mV (range 0-4 V)
+-- output_value_to_digital(index, value): writes to digital output channel via digitalWrite()
 
-Setup Instructions: The following setters should be assigned in during setup:
--- set_input_to_analog(index, value): toggles whether the i-th input is used as analog input
--- -- if false, the input voltage is compared against 'input_is_true_threshold' (default is 500 mV)
--- -- note: false by default
--- set_output_to_analog(index, value): toggles whether the i-th output is used as analog output
--- -- if true, the write instructions will get sent to the MCP4822 to perform DAC (range 0-4 V)
--- -- note: the MCP4822 can support two analog outputs per chip (max two MCP4822 chips)
--- -- note: false by default
+Setup Instructions: The following settings are available during setup:
+-- enable_clock_as_jack(index): use input jack as a clock signal (i.e., based on 500 mV threshold)
+-- enable_clock_2_as_jack(index): use input jack as a clock signal (i.e., based on 500 mV threshold)
 -- set_debug(value): sets whether to delay after each step and print to console
 -- -- note: true by default
 
@@ -58,12 +50,8 @@ make_new_module module;  // make the class
 
 // RUNS ONCE
 void setup() {
-  module.set_input_to_analog(0, false);
-  module.set_input_to_analog(1, false);
-  module.enable_clock_events(0);         // treat input 0 as a clock signal (optional)
-  module.enable_clock_events_2(1);       // treat input 1 as second clock signal (optional)
-  module.set_output_to_analog(0, true);  // send output 0 to DAC
-  module.set_output_to_analog(1, true);  // send output 1 to DAC
+  module.enable_clock_as_jack(0);         // treat input 0 as a clock signal (optional)
+  module.enable_clock_2_as_jack(1);       // treat input 1 as second clock signal (optional)
   module.set_debug(false);               // toggle debug
   module.start();                        // required to initialise pins
 }
@@ -81,38 +69,41 @@ void loop() {
 #include "backend/map_funcs.h"
 #include "backend/read_funcs.h"
 #include "backend/Timer.h"
-#include "chips/mcp4822.h"
+#include "backend/Input.h"
+#include "backend/Mcp4822.h"
 
 class EuroStep {
 
 public:
 
+  bool debug = false;
+
   // incoming values
-  int input_values[NUMBER_OF_INPUTS];      // the input as averaged over 8 readings
-  int input_history[NUMBER_OF_INPUTS][8];  // the last 8 readings
+  int jack_values[NUMBER_OF_JACKS];  // the input as averaged over 8 readings
   int pot_values[NUMBER_OF_POTS];
   bool switch_values[NUMBER_OF_SWITCHES];
 
-  // outgoing values
-  int output_values_old[NUMBER_OF_OUTPUTS];
-  int output_values[NUMBER_OF_OUTPUTS];
-  bool dac_code[16];  // used if output_mode_is_analog
-  int dac_event;      // helps track which DAC to write
+  // input classes to manage pin read
+  Input Jack[NUMBER_OF_JACKS];
+  Input Pot[NUMBER_OF_POTS];
+  Input Switch[NUMBER_OF_SWITCHES];
 
-  // options
-  bool debug = true;
-  int input_is_true_threshold = 500;
-  bool input_mode_is_analog[NUMBER_OF_INPUTS] = { 0 };
-  bool output_mode_is_analog[NUMBER_OF_OUTPUTS] = { 0 };
+  // split output between DAC and digital streams
+  int output_values_to_dac[4] = { 0 };
+  bool output_values_to_digital[NUMBER_OF_DIGITAL_OUTPUTS];
+
+  // output classes
+  Mcp4822 DAC1;
+  Mcp4822 DAC2;
 
   ///////////////////////////////////////////////////////////////////////////////
   /// Hardware variables
   ///////////////////////////////////////////////////////////////////////////////
 
-  int pins_input[NUMBER_OF_INPUTS] = PINS_INPUT;
+  int pins_jack[NUMBER_OF_JACKS] = PINS_JACK;
   int pins_pot[NUMBER_OF_POTS] = PINS_POT;
   int pins_switch[NUMBER_OF_SWITCHES] = PINS_SWITCH;
-  int pins_output[NUMBER_OF_OUTPUTS] = PINS_OUTPUT;
+  int pins_digital_output[NUMBER_OF_DIGITAL_OUTPUTS] = PINS_DIGITAL_OUTPUT;
   int pins_dac_a[4] = PINS_DAC_A;
   int pins_dac_b[4] = PINS_DAC_B;
 
@@ -121,31 +112,38 @@ public:
   ///////////////////////////////////////////////////////////////////////////////
 
   // incoming values
-  int get_input(int index) {
-    return input_values[index];
+  int get_jack_value(int index) {
+    return jack_values[index];
   }
-  int get_pot(int index) {
+  int get_pot_value(int index) {
     return pot_values[index];
   }
-  int get_switch(int index) {
+  int get_switch_value(int index) {
     return switch_values[index];
   }
 
-  // outgoing values
-  void set_output(int index, int value) {
-    output_values[index] = value;
+  // in order to run events on clock rise or fall, we need to know
+  //  what input to track as the clock signal
+  int clock_as_jack = -1;  // -1 disables clock events
+  void enable_clock_as_jack(int jack_number) {
+    clock_as_jack = jack_number;
   }
-  void send_to_output(int index, int value) {
-    output_values[index] = value;
+
+  // allow for a second clock
+  int clock_2_as_jack = -1;  // -1 disables clock events
+  void enable_clock_2_as_jack(int jack_number) {
+    clock_2_as_jack = jack_number;
+  }
+
+  // outgoing values
+  void output_value_to_dac(int index, int value) {
+    output_values_to_dac[index] = value;
+  }
+  void output_value_to_digital(int index, int value) {
+    output_values_to_digital[index] = value;
   }
 
   // options
-  void set_input_to_analog(int index, bool value = true) {
-    input_mode_is_analog[index] = value;
-  }
-  void set_output_to_analog(int index, bool value = true) {
-    output_mode_is_analog[index] = value;
-  }
   void set_debug(bool value = true) {
     debug = value;
   }
@@ -157,8 +155,8 @@ public:
   virtual void on_start_do() {}
   virtual void on_clock_rise_do() {}
   virtual void on_clock_fall_do() {}
-  virtual void on_clock_rise_2_do() {}
-  virtual void on_clock_fall_2_do() {}
+  virtual void on_clock_2_rise_do() {}
+  virtual void on_clock_2_fall_do() {}
   virtual void on_step_do() {}
 
   ///////////////////////////////////////////////////////////////////////////////
@@ -169,160 +167,92 @@ public:
 
     if (debug) Serial.begin(9600);
 
-    // initialise  inputs
-    for (int i = 0; i < NUMBER_OF_INPUTS; i++) {
-      pinMode(pins_input[i], INPUT);
+    // initialise inputs
+    for (int i = 0; i < NUMBER_OF_JACKS; i++) {
+      pinMode(pins_jack[i], INPUT);
+      Jack[i].setup_as_jack(pins_jack[i], V_DIVIDER_R1, V_DIVIDER_R2);
+      Jack[i].set_debug(debug);
     }
     for (int i = 0; i < NUMBER_OF_POTS; i++) {
       pinMode(pins_pot[i], INPUT);
+      Pot[i].setup_as_pot(pins_pot[i]);
+      Pot[i].set_max_input_mV(MAX_POT_VOLTAGE);
+      Pot[i].set_reverse_input(REVERSE_POT);
+      Pot[i].set_debug(debug);
     }
     for (int i = 0; i < NUMBER_OF_SWITCHES; i++) {
       pinMode(pins_switch[i], INPUT_PULLUP);
+      Switch[i].setup_as_switch(pins_switch[i]);
+      Switch[i].set_debug(debug);
     }
 
-    // initialise outputs
-    for (int i = 0; i < NUMBER_OF_OUTPUTS; i++) {
-      pinMode(pins_output[i], OUTPUT);
+    // initialise digital outputs
+    for (int i = 0; i < NUMBER_OF_DIGITAL_OUTPUTS; i++) {
+      pinMode(pins_digital_output[i], OUTPUT);
     }
-    for (int i = 0; i < 4; i++) {
-      if (pins_dac_a[i] != -1) {
+
+    // initial DAC 1
+    if (pins_dac_a[0] != -1) {
+      DAC1.set_pins(pins_dac_a[0], pins_dac_a[1], pins_dac_a[2], pins_dac_a[3]);
+      for (int i = 0; i < 4; i++) {
         pinMode(pins_dac_a[i], OUTPUT);
       }
-      if (pins_dac_b[i] != -1) {
+    }
+
+    // initial DAC 2
+    if (pins_dac_b[0] != -1) {
+      DAC2.set_pins(pins_dac_b[0], pins_dac_b[1], pins_dac_b[2], pins_dac_b[3]);
+      for (int i = 0; i < 4; i++) {
         pinMode(pins_dac_b[i], OUTPUT);
       }
     }
   }
 
   ///////////////////////////////////////////////////////////////////////////////
-  /// This is a generic way to read audio jack inputs as analog or digital
+  /// Use the Input Class to manage all pin reads
   ///////////////////////////////////////////////////////////////////////////////
 
-  void read_inputs() {
-
-    for (int i = 0; i < NUMBER_OF_INPUTS; i++) {
-      if (input_mode_is_analog[i]) {
-        input_values[i] = read_analog_mV_smooth(
-          pins_input[i],
-          input_history[i],
-          V_DIVIDER_R1,
-          V_DIVIDER_R2,
-          debug);
-      } else {
-        input_values[i] = read_analog_bool(
-          pins_input[i],
-          input_is_true_threshold,
-          V_DIVIDER_R1,
-          V_DIVIDER_R2,
-          debug);
-      }
+  void read_jacks() {
+    for (int i = 0; i < NUMBER_OF_JACKS; i++) {
+      jack_values[i] = Jack[i].get_input_as_mV();
     }
   }
-
-  ///////////////////////////////////////////////////////////////////////////////
-  /// This is a generic way to read pots as a percent value
-  ///////////////////////////////////////////////////////////////////////////////
 
   void read_pots() {
-
     for (int i = 0; i < NUMBER_OF_POTS; i++) {
-      pot_values[i] = read_analog_pct(
-        pins_pot[i],
-        MAX_POT_VOLTAGE,
-        REVERSE_POT,
-        0,
-        0,
-        debug);
+      pot_values[i] = Pot[i].get_input_as_percent();
     }
   }
-
-  ///////////////////////////////////////////////////////////////////////////////
-  /// This is a generic way to read switches as bools
-  ///////////////////////////////////////////////////////////////////////////////
 
   void read_switches() {
-
     for (int i = 0; i < NUMBER_OF_SWITCHES; i++) {
-      switch_values[i] = digitalRead(pins_switch[i]);
-    }
-
-    if (debug) {
-      for (int i = 0; i < NUMBER_OF_SWITCHES; i++) {
-        Serial.print(switch_values[i]);
-      }
-      Serial.println("");
+      switch_values[i] = Switch[i].get_input_as_bool();
     }
   }
 
   ///////////////////////////////////////////////////////////////////////////////
-  /// Provide helper functions for clock rise and clock fall
+  /// Run clock rise and clock fall (if enabled)
   ///////////////////////////////////////////////////////////////////////////////
 
-  // in order to run events on clock rise or fall, we need to know
-  //  what input to track as the clock signal
-  int clock_input = -1;  // -1 disables clock events
-  void enable_clock_events(int index) {
-    clock_input = index;
-  }
-
-  bool current_state_is_high;
-  bool last_state_is_low = true;
   void run_clock_events() {
-
-    if (clock_input > -1) {  // by default program assumes no clock exists
-
-      current_state_is_high = input_values[clock_input];  // for legibility
-
-      // only run once per clock cycle
-      // run on rising edge of incoming clock signal
-      if (current_state_is_high & last_state_is_low) {
-        if (debug) Serial.println("Clock has risen.");
+    if (clock_as_jack > -1) {  // by default program assumes no clock exists
+      if (Jack[clock_as_jack].check_if_input_went_low_to_high()) {
         on_clock_rise_do();
-        last_state_is_low = false;
       }
-
-      // only run once per clock cycle
-      // run on falling edge of incoming clock signal
-      if (!current_state_is_high & !last_state_is_low) {
-        if (debug) Serial.println("Clock has fallen.");
-        on_clock_fall_do();
-        last_state_is_low = true;
+      if (Jack[clock_as_jack].check_if_input_went_high_to_low()) {
+        on_clock_rise_do();
       }
     }
   }
 
-  ///////////////////////////////////////////////////////////////////////////////
-  /// Provide helper functions for clock rise and clock fall
-  ///////////////////////////////////////////////////////////////////////////////
+  void run_clock_2_events() {
 
-  // allow for a second clock
-  int clock_input_2 = -1;  // -1 disables clock events
-  void enable_clock_events_2(int index) {
-    clock_input_2 = index;
-  }
-
-  bool current_state_is_high_2;
-  bool last_state_is_low_2 = true;
-  void run_clock_events_2() {
-
-    if (clock_input_2 > -1) {  // by default program assumes no clock exists
-
-      current_state_is_high_2 = input_values[clock_input_2];  // for legibility
-
-      // only run once per clock cycle
-      // run on rising edge of incoming clock signal
-      if (current_state_is_high_2 & last_state_is_low_2) {
-        if (debug) Serial.println("Clock 2 has risen.");
-        on_clock_rise_2_do();
-        last_state_is_low_2 = false;
+    if (clock_2_as_jack > -1) {  // by default program assumes no clock exists
+      if (Jack[clock_2_as_jack].check_if_input_went_low_to_high()) {
+        on_clock_rise_do();
       }
-
-      // only run once per clock cycle
-      // run on falling edge of incoming clock signal
-      if (!current_state_is_high_2 & !last_state_is_low_2) {
-        if (debug) Serial.println("Clock 2 has fallen.");
-        on_clock_fall_2_do();
-        last_state_is_low_2 = true;
+      if (Jack[clock_2_as_jack].check_if_input_went_high_to_low()) {
+        on_clock_rise_do();
       }
     }
   }
@@ -333,88 +263,22 @@ public:
 
   void write_outputs() {
 
-    dac_event = 0;
-    for (int i = 0; i < NUMBER_OF_OUTPUTS; i++) {
+    // write analog output
+    DAC1.send_to_channel_A(output_values_to_dac[0]);
+    DAC1.send_to_channel_B(output_values_to_dac[1]);
+    DAC2.send_to_channel_A(output_values_to_dac[2]);
+    DAC2.send_to_channel_B(output_values_to_dac[3]);
 
-      if (output_mode_is_analog[i]) {
-
-        // the program cannot currently handle more than 4 analog
-        //  outputs since only 2x DACs are set up in memory
-        dac_event++;
-        assert(dac_event <= 4);
-
-        if (output_values[i] != output_values_old[i]) {
-
-          if (debug) {
-            Serial.print("Writing analog output ");
-            Serial.print(i);
-            Serial.print(": ");
-            Serial.print(output_values[i]);
-            Serial.println("");
-          }
-
-          if (dac_event == 1 | dac_event == 3) {  // odd dac events are run on channel A
-            update_dac_code(dac_code,
-                            output_values[i],  // what to write
-                            false,             // whether dac channel is odd or even
-                            debug);
-          } else {  // even dac events are run on channel B
-            update_dac_code(dac_code,
-                            output_values[i],  // what to write
-                            true,              // whether dac channel is odd or even
-                            debug);
-          }
-
-          if (dac_event == 1 | dac_event == 2) {  // the first two dac events run on dac A
-            write_dac_code(dac_code,
-                           pins_dac_a[0],  // PIN_CS,
-                           pins_dac_a[1],  // PIN_SCK,
-                           pins_dac_a[2],  // PIN_SDI,
-                           pins_dac_a[3]   // PIN_LDAC
-            );
-          } else {  // the second two dac events run on dac B
-            write_dac_code(dac_code,
-                           pins_dac_b[0],  // PIN_CS,
-                           pins_dac_b[1],  // PIN_SCK,
-                           pins_dac_b[2],  // PIN_SDI,
-                           pins_dac_b[3]   // PIN_LDAC
-            );
-          }
-        }
-
-      } else {  // if output mode is digital
-
-        if (debug) {
-          Serial.print("Writing digital output ");
-          Serial.print(i);
-          Serial.print(": ");
-          Serial.print(output_values[i]);
-          Serial.println("");
-        }
-
-        if (output_values[i] != output_values_old[i]) {
-          digitalWrite(pins_output[i], output_values[i]);
-        }
+    for (int i = 0; i < NUMBER_OF_DIGITAL_OUTPUTS; i++) {
+      if (debug) {
+        Serial.print("Writing digital output ");
+        Serial.print(i);
+        Serial.print(": ");
+        Serial.print(output_values_to_digital[i]);
+        Serial.println("");
       }
-
-      // whether output mode is analog or digital,
-      //  track history to avoid state changes when unnecessary
-      output_values_old[i] = output_values[i];
+      digitalWrite(pins_digital_output[i], output_values_to_digital[i]);
     }
-  }
-
-  ///////////////////////////////////////////////////////////////////////////////
-  /// A single timer is included for backwards compatibility
-  ///////////////////////////////////////////////////////////////////////////////
-
-  Timer timer;
-
-  reset_timer() {
-    timer.reset_timer();
-  }
-
-  get_timer() {
-    timer.get_timer();
   }
 
   ///////////////////////////////////////////////////////////////////////////////
@@ -427,11 +291,11 @@ public:
   }
 
   void step() {
-    read_inputs();
+    read_jacks();
     read_pots();
     read_switches();
     run_clock_events();
-    run_clock_events_2();
+    run_clock_2_events();
     on_step_do();
     write_outputs();
     if (debug) delay(250);

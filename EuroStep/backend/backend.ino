@@ -4,6 +4,8 @@
 #include "map_funcs.h"
 #include "read_funcs.h"
 #include "Timer.h"
+#include "Input.h"
+#include "Mcp4822.h"
 
 void setup() {
   // put your setup code here, to run once:
