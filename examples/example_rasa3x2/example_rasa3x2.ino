@@ -1,6 +1,6 @@
-#include "C:/Users/Thom/Dropbox/Hobbies/Electronics/GitHub/devkit/EuroStep/hardware/rasa3x2.h"
-#include "C:/Users/Thom/Dropbox/Hobbies/Electronics/GitHub/devkit/EuroStep/EuroStep.h"
-#include "C:/Users/Thom/Dropbox/Hobbies/Electronics/GitHub/devkit/EuroStep/add-ons/Envelope.h"
+#include "C:/Users/61436/Dropbox/Hobbies/Electronics/GitHub/devkit/EuroStep/hardware/rasa3x2.h"
+#include "C:/Users/61436/Dropbox/Hobbies/Electronics/GitHub/devkit/EuroStep/EuroStep.h"
+#include "C:/Users/61436/Dropbox/Hobbies/Electronics/GitHub/devkit/EuroStep/add-ons/Envelope.h"
 
 class make_Envelope_ADSR : public EuroStep::EuroStep {
 public:
@@ -19,10 +19,10 @@ public:
   void on_clock_fall_do() {
     Env1.turn_off_gate();
   }
-  void on_clock_rise_2_do() {
+  void on_clock_2_rise_do() {
     Env2.turn_on_gate();
   }
-  void on_clock_fall_2_do() {
+  void on_clock_2_fall_do() {
     Env2.turn_off_gate();
   }
 
@@ -58,8 +58,9 @@ public:
     Env1.advance_envelope();
     Env2.advance_envelope();
 
-    send_to_output(0, Env1.get_current_value());
-    send_to_output(1, Env2.get_current_value());
+    // write envelope to dac
+    output_value_to_dac(0, Env1.get_current_value());
+    output_value_to_dac(1, Env2.get_current_value());
   }
 };
 
@@ -67,14 +68,10 @@ make_Envelope_ADSR module;  // make the class
 
 // RUNS ONCE
 void setup() {
-  module.set_input_to_analog(0, false);
-  module.set_input_to_analog(1, false);
-  module.enable_clock_events(0);         // treat input 0 as a clock signal (optional)
-  module.enable_clock_events_2(1);       // treat input 1 as second clock signal (optional)
-  module.set_output_to_analog(0, true);  // send output 0 to DAC
-  module.set_output_to_analog(1, true);  // send output 1 to DAC
-  module.set_debug(false);               // toggle debug
-  module.start();                        // required to initialise pins
+  module.enable_clock_as_jack(0);  // treat input 0 as a clock signal (optional)
+  module.enable_clock_2_as_jack(1);
+  module.set_debug(false);  // toggle debug
+  module.start();           // required to initialise pins
 }
 
 // RUNS EVERY STEP

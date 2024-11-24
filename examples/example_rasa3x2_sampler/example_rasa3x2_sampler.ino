@@ -1,11 +1,7 @@
-//#include "C:/Users/61436/Dropbox/Hobbies/Electronics/GitHub/devkit/EuroStep/hardware/rasa3x2.h"
-//#include "C:/Users/61436/Dropbox/Hobbies/Electronics/GitHub/devkit/EuroStep/EuroStep.h"
-//#include "C:/Users/61436/Dropbox/Hobbies/Electronics/GitHub/devkit/EuroStep/add-ons/Playback.h"
-//#include "C:/Users/61436/Dropbox/Hobbies/Electronics/GitHub/devkit/EuroStep/add-ons/Predelay.h"
-#include "C:/Users/Thom/Dropbox/Hobbies/Electronics/GitHub/devkit/EuroStep/hardware/rasa3x2.h"
-#include "C:/Users/Thom/Dropbox/Hobbies/Electronics/GitHub/devkit/EuroStep/EuroStep.h"
-#include "C:/Users/Thom/Dropbox/Hobbies/Electronics/GitHub/devkit/EuroStep/add-ons/Playback.h"
-#include "C:/Users/Thom/Dropbox/Hobbies/Electronics/GitHub/devkit/EuroStep/add-ons/Predelay.h"
+#include "C:/Users/61436/Dropbox/Hobbies/Electronics/GitHub/devkit/EuroStep/hardware/rasa3x2.h"
+#include "C:/Users/61436/Dropbox/Hobbies/Electronics/GitHub/devkit/EuroStep/EuroStep.h"
+#include "C:/Users/61436/Dropbox/Hobbies/Electronics/GitHub/devkit/EuroStep/add-ons/Playback.h"
+#include "C:/Users/61436/Dropbox/Hobbies/Electronics/GitHub/devkit/EuroStep/add-ons/Predelay.h"
 #include "sample_bank.h"
 
 class make_Envelope_Sampler : public EuroStep::EuroStep {
@@ -52,9 +48,12 @@ public:
     sample1_predelay = map_percent_to_range(pot_values[2], 1, 1000);  // note: uses millis
     Predelay1.restart_predelay(sample1_predelay);
   }
+
   void on_clock_fall_do() {
+    // do nothing
   }
-  void on_clock_rise_2_do() {
+
+  void on_clock_2_rise_do() {
 
     // use pot #1 to read sample from "wave table"
     sample2_bank = map_percent_to_range(pot_values[3], 0, 15);
@@ -65,7 +64,9 @@ public:
     sample2_predelay = map_percent_to_range(pot_values[5], 1, 1000);  // note: uses millis
     Predelay2.restart_predelay(sample2_predelay);
   }
-  void on_clock_fall_2_do() {
+
+  void on_clock_2_fall_do() {
+    // do nothing
   }
 
   ///////////////////////////////////////////////////////////////////////////////
@@ -92,8 +93,8 @@ public:
     }
 
     // send value to DAC
-    send_to_output(0, map_byte_to_range(Sample1.get_current_value(), 0, 4095));  //
-    send_to_output(1, map_byte_to_range(Sample2.get_current_value(), 0, 4095));
+    output_value_to_dac(0, map_byte_to_range(Sample1.get_current_value(), 0, 4095));  //
+    output_value_to_dac(1, map_byte_to_range(Sample2.get_current_value(), 0, 4095));
   }
 };
 
@@ -101,14 +102,10 @@ make_Envelope_Sampler module;  // make the class
 
 // RUNS ONCE
 void setup() {
-  module.set_input_to_analog(0, false);
-  module.set_input_to_analog(1, false);
-  module.enable_clock_events(0);         // treat input 0 as a clock signal (optional)
-  module.enable_clock_events_2(1);       // treat input 1 as second clock signal (optional)
-  module.set_output_to_analog(0, true);  // send output 0 to DAC
-  module.set_output_to_analog(1, true);  // send output 1 to DAC
-  module.set_debug(false);               // toggle debug
-  module.start();                        // required to initialise pins
+  module.enable_clock_as_jack(0);  // treat input 0 as a clock signal (optional)
+  module.enable_clock_2_as_jack(1);
+  module.set_debug(false);  // toggle debug
+  module.start();           // required to initialise pins
 }
 
 // RUNS EVERY STEP

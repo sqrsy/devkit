@@ -3,12 +3,9 @@
 #include "C:/Users/61436/Dropbox/Hobbies/Electronics/GitHub/devkit/EuroStep/add-ons/Envelope.h"
 #include "C:/Users/61436/Dropbox/Hobbies/Electronics/GitHub/devkit/EuroStep/add-ons/Interpolate.h"
 #include "C:/Users/61436/Dropbox/Hobbies/Electronics/GitHub/devkit/EuroStep/add-ons/Playback.h"
-//#include "C:/Users/Thom/Dropbox/Hobbies/Electronics/GitHub/devkit/EuroStep/hardware/rasa3x2.h"
-//#include "C:/Users/Thom/Dropbox/Hobbies/Electronics/GitHub/devkit/EuroStep/EuroStep.h"
-//#include "C:/Users/Thom/Dropbox/Hobbies/Electronics/GitHub/devkit/EuroStep/add-ons/Playback.h"
 #include "wavetable.h"
 
-class make_Envelope_Sampler : public EuroStep::EuroStep {
+class make_Envelope_LFO : public EuroStep::EuroStep {
 public:
 
   // objects for doing the work
@@ -43,6 +40,7 @@ public:
     Env.turn_on_gate();
     LFO.restart_playback();
   }
+
   void on_clock_fall_do() {
     Env.turn_off_gate();
   }
@@ -96,7 +94,7 @@ public:
     } else {
       lfo_playback_rate = lfo_speed;
     }
-    lfo_cv_as_percent = input_values[1] / 5000.0;       // normal speed when 0V -- CV will increase speed
+    lfo_cv_as_percent = jack_values[1] / 5000.0;        // normal speed when 0V -- CV will increase speed
     lfo_cv_as_percent = 3.0 * lfo_cv_as_percent / 4.0;  // no more than 75% increase in lfo speed
     lfo_playback_rate = lfo_playback_rate - lfo_playback_rate * lfo_cv_as_percent;
     LFO.set_playback_rate(lfo_playback_rate);
@@ -106,22 +104,18 @@ public:
     env_lfo_val = 127 + ((LFO.get_current_value() - 127) * env_val_as_percent);  // mid-point is 127
 
     // send value to DAC
-    send_to_output(0, Env.get_current_value());  //
-    send_to_output(1, map_byte_to_range(env_lfo_val, 0, 4095));
+    output_value_to_dac(0, Env.get_current_value());  //
+    output_value_to_dac(1, map_byte_to_range(env_lfo_val, 0, 4095));
   }
 };
 
-make_Envelope_Sampler module;  // make the class
+make_Envelope_LFO module;  // make the class
 
 // RUNS ONCE
 void setup() {
-  module.set_input_to_analog(0, false);
-  module.set_input_to_analog(1, true);
-  module.enable_clock_events(0);         // treat input 0 as a clock signal (optional)
-  module.set_output_to_analog(0, true);  // send output 0 to DAC
-  module.set_output_to_analog(1, true);  // send output 1 to DAC
-  module.set_debug(false);               // toggle debug
-  module.start();                        // required to initialise pins
+  module.enable_clock_as_jack(0);  // treat input 0 as a clock signal (optional)
+  module.set_debug(false);         // toggle debug
+  module.start();                  // required to initialise pins
 }
 
 // RUNS EVERY STEP
