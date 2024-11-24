@@ -1,3 +1,32 @@
+/*
+Class Name: Input
+
+Purpose: Read input from pins.
+
+Dependencies: This class inherits from the Timer class.
+
+Use: Create an instance of the class and then configure the settings:
+-- setup_as_jack(int pin, int r1, int r2): Configures the input for an analog jack with smoothing.
+-- setup_as_pot(int pin): Configures the input for a potentiometer without smoothing.
+-- setup_as_switch(int pin): Configures the input for a digital switch (binary input).
+
+You can customise settings further via:
+-- set_read_frequency(int value): Sets how often the input should be read (in milliseconds).
+-- set_read_frequency_offset(int value): Sets a time offset for staggered input readings.
+-- set_max_input_mV(int value): Sets the maximum expected input voltage in millivolts.
+-- set_reverse_input(bool value): Enables or disables reversing of the input value.
+-- set_debug(bool value): Enables or disables debug mode for additional logging.
+
+You actually get the input value via:
+-- get_input_as_mV(): Returns the current input value in millivolts (mV).
+-- get_input_as_percent(): Returns the current input value as a percentage of the maximum.
+-- get_input_as_bool(): Returns true or false based on the input threshold.
+-- check_if_input_went_low_to_high(): Detects if the input transitioned from low to high.
+-- -- Used to trigger a clock rise signal.
+-- check_if_input_went_high_to_low(): Detects if the input transitioned from high to low.
+-- -- Used to trigger a clock fall signal.
+*/
+
 class Input : public Timer {
 
 private:
@@ -38,8 +67,6 @@ private:
     return (input / value * value);
   }
 
-public:
-
   void read_input_immediately() {
     last_value_mV = current_value_mV;  // save last value -- used for clock signals
     if (input_is_digital) {
@@ -61,29 +88,7 @@ public:
     }
   }
 
-  ///////////////////////////////////////////////////////////////////////////////
-  /// Configure how to read the Input
-  ///////////////////////////////////////////////////////////////////////////////
-
-  void set_read_frequency(int value) {
-    read_frequency = value;
-  }
-
-  void set_read_frequency_offset(int value) {
-    read_frequency_offset = value;
-  }
-
-  void set_max_input_mV(int value) {
-    max_input_mV = value;
-  }
-
-  void set_reverse_input(bool value) {
-    reverse_input = value;
-  }
-
-  void set_debug(bool value) {
-    debug = value;
-  }
+public:
 
   ///////////////////////////////////////////////////////////////////////////////
   /// Wrappers for Input setup
@@ -113,6 +118,30 @@ public:
     set_read_frequency_offset(input_pin);
     smooth_input = false;
     input_is_digital = true;
+  }
+
+  ///////////////////////////////////////////////////////////////////////////////
+  /// Customise settings further
+  ///////////////////////////////////////////////////////////////////////////////
+
+  void set_read_frequency(int value) {
+    read_frequency = value;
+  }
+
+  void set_read_frequency_offset(int value) {
+    read_frequency_offset = value;
+  }
+
+  void set_max_input_mV(int value) {
+    max_input_mV = value;
+  }
+
+  void set_reverse_input(bool value) {
+    reverse_input = value;
+  }
+
+  void set_debug(bool value) {
+    debug = value;
   }
 
   ///////////////////////////////////////////////////////////////////////////////

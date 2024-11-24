@@ -1,3 +1,19 @@
+/*
+Class Name: Mcp4822
+
+Purpose: Send output to DAC.
+
+Dependencies: None.
+
+Use: Create an instance of the class and then configure the settings:
+-- set_pins(int cs, int sck, int sdi, int ldac): Sets the control pins for the DAC.
+-- set_debug(bool value): Enables or disables debug mode for additional logging.
+
+You actually write to the DAC via:
+-- send_to_channel_A(int mV_out): Sends a specified voltage (mV) to channel A of the DAC.
+-- send_to_channel_B(int mV_out): Sends a specified voltage (mV) to channel B of the DAC.
+*/
+
 class Mcp4822 {
 
 private:
@@ -123,18 +139,9 @@ private:
     delayMicroseconds(1);
   };
 
-public:
-
-  void set_debug(bool value) {
-    debug = value;
-  }
-
-  void set_pins(int cs, int sck, int sdi, int ldac) {
-    pin_cs = cs;
-    pin_sck = sck;
-    pin_sdi = sdi;
-    pin_ldac = ldac;
-  }
+  ///////////////////////////////////////////////////////////////////////////////
+  /// Run program
+  ///////////////////////////////////////////////////////////////////////////////
 
   void send_to_dac(int mV_out, bool use_channel_B) {
     if (debug) {
@@ -153,6 +160,27 @@ public:
       }
     }
   }
+
+public:
+
+  ///////////////////////////////////////////////////////////////////////////////
+  /// Set up chip
+  ///////////////////////////////////////////////////////////////////////////////
+
+  void set_pins(int cs, int sck, int sdi, int ldac) {
+    pin_cs = cs;
+    pin_sck = sck;
+    pin_sdi = sdi;
+    pin_ldac = ldac;
+  }
+
+  void set_debug(bool value) {
+    debug = value;
+  }
+
+  ///////////////////////////////////////////////////////////////////////////////
+  /// Send data to chip
+  ///////////////////////////////////////////////////////////////////////////////
 
   void send_to_channel_A(int mV_out) {
     send_to_dac(mV_out, 0);
