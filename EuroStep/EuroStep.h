@@ -194,6 +194,7 @@ public:
     // initial DAC 1
     if (pins_dac_a[0] != -1) {
       DAC1.set_pins(pins_dac_a[0], pins_dac_a[1], pins_dac_a[2], pins_dac_a[3]);
+      DAC1.set_debug(debug);
       for (int i = 0; i < 4; i++) {
         pinMode(pins_dac_a[i], OUTPUT);
       }
@@ -202,6 +203,7 @@ public:
     // initial DAC 2
     if (pins_dac_b[0] != -1) {
       DAC2.set_pins(pins_dac_b[0], pins_dac_b[1], pins_dac_b[2], pins_dac_b[3]);
+      DAC2.set_debug(debug);
       for (int i = 0; i < 4; i++) {
         pinMode(pins_dac_b[i], OUTPUT);
       }
@@ -240,19 +242,18 @@ public:
         on_clock_rise_do();
       }
       if (Jack[clock_as_jack].check_if_input_went_high_to_low()) {
-        on_clock_rise_do();
+        on_clock_fall_do();
       }
     }
   }
 
   void run_clock_2_events() {
-
     if (clock_2_as_jack > -1) {  // by default program assumes no clock exists
       if (Jack[clock_2_as_jack].check_if_input_went_low_to_high()) {
-        on_clock_rise_do();
+        on_clock_2_rise_do();
       }
       if (Jack[clock_2_as_jack].check_if_input_went_high_to_low()) {
-        on_clock_rise_do();
+        on_clock_2_fall_do();
       }
     }
   }
