@@ -93,9 +93,8 @@ float map_percent_to_centred_exp_range(int pct, int exp_mid, int plus_or_minus) 
  * @param max_mV The maximum millivolt value to which the mV is compared. Default is 5000 mV.
  * @return The percentage of mV relative to max_mV (0 to 100).
  */
-int map_mV_to_percent(int mV, int max_mV = 5000) {
-  double dV = 100 * mV;
-  int pct = dV / max_mV;
+int map_mV_to_percent(int mV, int max_mV) {
+  int pct = mV / (max_mV / 100);
   return (pct);
 }
 
