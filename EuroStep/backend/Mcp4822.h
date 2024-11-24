@@ -17,10 +17,6 @@ private:
   // keep history
   int last_mV_out = 0;
 
-  void set_debug(bool value) {
-    debug = value;
-  }
-
   ///////////////////////////////////////////////////////////////////////////////
   /// Interpret Chip Register
   ///////////////////////////////////////////////////////////////////////////////
@@ -129,6 +125,10 @@ private:
 
 public:
 
+  void set_debug(bool value) {
+    debug = value;
+  }
+
   void set_pins(int cs, int sck, int sdi, int ldac) {
     pin_cs = cs;
     pin_sck = sck;
@@ -137,6 +137,12 @@ public:
   }
 
   void send_to_dac(int mV_out, bool use_channel_B) {
+    if (debug) {
+      Serial.print("Sending to DAC via CS pin: ");
+      Serial.println(pin_cs);
+      Serial.print("Sending value: ");
+      Serial.println(mV_out);
+    }
     if (pin_cs > -1) {  // pin_cs = -1 used to skip whole thing
       if (mV_out < 0) mV_out = 0;
       if (mV_out > 4095) mV_out = 4095;  // chip cannot write 4096!!
