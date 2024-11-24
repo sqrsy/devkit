@@ -16,7 +16,7 @@ private:
   int current_value_mV_history[8] = { 0 };
   int current_value_mV = 0;
   int current_value_percent = 0;
-  int round_percent_to = 4;
+  int round_percent_to = 1;
   int input_as_bool_threshold = 500;
   int max_input_mV = 5000;
 
@@ -34,8 +34,8 @@ private:
   bool input_is_digital = false;
   bool input_from_digital_read = 0;
 
-  int round_percent_to_nearest(int value) {
-    return current_value_percent / value * value;
+  int round_to_nearest(int input, int value) {
+    return (input / value * value);
   }
 
 public:
@@ -51,12 +51,11 @@ public:
         current_value_mV = read_analog_mV(input_pin, r1_value, r2_value, debug);
       }
     }
+    current_value_mV = transfer_value_to_range(current_value_mV, 0, max_input_mV);
     if (reverse_input) current_value_mV = max_input_mV - current_value_mV;
   }
 
   void read_input_if_ready() {
-
-    // read once Timer has elapsed
     if (get_timer() > read_frequency) {
       read_input_immediately();
     }
@@ -128,7 +127,7 @@ public:
   int get_input_as_percent() {
     read_input_if_ready();
     current_value_percent = map_mV_to_percent(current_value_mV, max_input_mV);
-    return round_percent_to_nearest(round_percent_to);
+    return round_to_nearest(current_value_percent, round_percent_to);
   }
 
   bool get_input_as_bool() {
