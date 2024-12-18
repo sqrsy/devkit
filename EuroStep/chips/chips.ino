@@ -1,6 +1,7 @@
-#include "C:/Users/61436/Dropbox/Hobbies/Synths/Arduino/devkit/EuroStep/backend/backend.h"
+#include "C:/Users/61436/Dropbox/Hobbies/Electronics/GitHub/devkit/EuroStep/backend/bit_funcs.h"
+#include "C:/Users/61436/Dropbox/Hobbies/Electronics/GitHub/devkit/EuroStep/backend/transfer_funcs.h"
 #include "dummy.h"  // dummy pins to test compile
-#include "mcp4822.h"
+#include "Sn76489.h"
 #include "ym2149.h"
 #include "ym2612.h"
 
