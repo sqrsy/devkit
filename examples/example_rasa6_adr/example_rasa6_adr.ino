@@ -52,9 +52,10 @@ make_envelope module;
 
 // RUNS ONCE
 void setup() {
-  module.enable_clock_as_jack(0);  // treat input 0 as a clock signal (optional)
-  module.set_debug(false);         // toggle debug
-  module.start();                  // required to initialise pins
+  module.enable_clock_as_jack(0);    // treat input 0 as a clock signal (optional)
+  module.enable_clock_2_as_jack(0);  // treat input 0 as a clock signal (optional)
+  module.set_debug(false);           // toggle debug
+  module.start();                    // required to initialise pins
 }
 
 // RUNS EVERY STEP
