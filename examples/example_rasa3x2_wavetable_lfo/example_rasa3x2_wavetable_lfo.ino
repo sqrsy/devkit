@@ -104,7 +104,7 @@ public:
     env_lfo_val = 127 + ((LFO.get_current_value() - 127) * env_val_as_percent);  // mid-point is 127
 
     // send value to DAC
-    output_value_to_dac(0, map_percent_to_range(env_val_as_percent*100, 2000, 4000));  // make envelope non-negative
+    output_value_to_dac(0, map_percent_to_range(env_val_as_percent * 100, 2000, 4000));  // make envelope non-negative
     output_value_to_dac(1, map_byte_to_range(env_lfo_val, 0, 4095));
   }
 };
