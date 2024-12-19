@@ -9,7 +9,9 @@ Use: Create an instance of the class and configure settings, then run:
 -- enable_note(j): Add j-th note to quantiser scale.
 -- disable_note(j): Remove j-th note from quantiser scale.
 -- run(int incoming_cv): Quantise the voltage (in mV).
--- get_quantised_cv(): Get result.
+-- get_quantised_note_number(): Get result as a MIDI note number.
+-- get_quantised_whole_tone(): Get result as a number from 0 to 11.
+-- get_quantised_cv(): Get result in mV.
 */
 
 // Quantise note number to next nearest note number
@@ -45,8 +47,8 @@ class Quantiser {
 private:
 
   bool scale[12] = { false };
-  int incoming_tone = 0;
-  int quantised_tone = 0;
+  int incoming_note_number = 0;
+  int quantised_note_number = 0;
   int quantised_cv = 0;
 
   // used to skip quantiser when no notes are set
@@ -94,15 +96,25 @@ public:
     if (nothing_to_quantise) {
       quantised_cv = incoming_cv;
     } else {
-      incoming_tone = map_mV_to_note_number(incoming_cv);
-      quantised_tone = find_nearest_note_in_scale(incoming_tone, scale);
-      quantised_cv = map_note_number_to_mV(quantised_tone);
+      incoming_note_number = map_mV_to_note_number(incoming_cv);
+      quantised_note_number = find_nearest_note_in_scale(incoming_note_number, scale);
+      quantised_cv = map_note_number_to_mV(quantised_note_number);
     }
   }
 
   ///////////////////////////////////////////////////////////////////////////////
   /// Get result
   ///////////////////////////////////////////////////////////////////////////////
+
+  // Get the quantised MIDI note number
+  int get_quantised_note_number() {
+    return quantised_note_number;
+  }
+
+  // Get the quantised MIDI note number
+  int get_quantised_whole_tone() {
+    return quantised_note_number % 12;
+  }
 
   // Get the quantized CV in millivolts
   int get_quantised_cv() {
