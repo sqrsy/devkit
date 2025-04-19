@@ -100,6 +100,7 @@ public:
   /// Hardware variables
   ///////////////////////////////////////////////////////////////////////////////
 
+  bool jack_is_digital[NUMBER_OF_JACKS] = JACK_IS_DIGITAL;
   int pins_jack[NUMBER_OF_JACKS] = PINS_JACK;
   int pins_pot[NUMBER_OF_POTS] = PINS_POT;
   int pins_switch[NUMBER_OF_SWITCHES] = PINS_SWITCH;
@@ -169,19 +170,21 @@ public:
 
     // initialise inputs
     for (int i = 0; i < NUMBER_OF_JACKS; i++) {
-      pinMode(pins_jack[i], INPUT);
-      Jack[i].setup_as_jack(pins_jack[i], V_DIVIDER_R1, V_DIVIDER_R2);
-      Jack[i].set_debug(debug);
+      if (jack_is_digital[i]) {
+        Jack[i].setup_as_digital_jack(pins_jack[i]);
+        Jack[i].set_debug(debug);
+      } else {
+        Jack[i].setup_as_analog_jack(pins_jack[i], V_DIVIDER_R1, V_DIVIDER_R2);
+        Jack[i].set_debug(debug);
+      }
     }
     for (int i = 0; i < NUMBER_OF_POTS; i++) {
-      pinMode(pins_pot[i], INPUT);
       Pot[i].setup_as_pot(pins_pot[i]);
       Pot[i].set_max_input_mV(MAX_POT_VOLTAGE);
       Pot[i].set_reverse_input(REVERSE_POT);
       Pot[i].set_debug(debug);
     }
     for (int i = 0; i < NUMBER_OF_SWITCHES; i++) {
-      pinMode(pins_switch[i], INPUT_PULLUP);
       Switch[i].setup_as_switch(pins_switch[i]);
       Switch[i].set_debug(debug);
     }
@@ -195,18 +198,12 @@ public:
     if (pins_dac_a[0] != -1) {
       DAC1.set_pins(pins_dac_a[0], pins_dac_a[1], pins_dac_a[2], pins_dac_a[3]);
       DAC1.set_debug(debug);
-      for (int i = 0; i < 4; i++) {
-        pinMode(pins_dac_a[i], OUTPUT);
-      }
     }
 
     // initial DAC 2
     if (pins_dac_b[0] != -1) {
       DAC2.set_pins(pins_dac_b[0], pins_dac_b[1], pins_dac_b[2], pins_dac_b[3]);
       DAC2.set_debug(debug);
-      for (int i = 0; i < 4; i++) {
-        pinMode(pins_dac_b[i], OUTPUT);
-      }
     }
   }
 
