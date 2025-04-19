@@ -63,7 +63,7 @@ float read_analog_mV(int pin_in, int r1 = 0, int r2 = 0, bool debug = false) {
 int read_analog_mV_smooth(int pin_in, int read_history[8], int r1 = 0, int r2 = 0, bool debug = false) {
 
   // track history of input
-  for (int i = 0; i < 8; i++) {  // move history back one step
+  for (int i = 0; i < 7; i++) {  // move history back one step
     read_history[i] = read_history[i + 1];
   }
   read_history[7] = read_analog_mV(pin_in, r1, r2);  // update history with new value
