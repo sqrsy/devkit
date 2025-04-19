@@ -10,6 +10,7 @@ Use: Create an instance of the class and configure settings, then run:
 -- reset_timer(): resets the timer to 0
 
 You may wish to configure the following settings:
+-- offset_timer(int value): resets the timer but adds an extra time delay once
 -- use_millis(): use milliseconds for the timer (default)
 -- use_micros(): use microseconds for the timer
 */
@@ -54,5 +55,13 @@ public:
 
   void reset_timer() {
     last_timer = time_right_now();
+  }
+
+  ///////////////////////////////////////////////////////////////////////////////
+  /// Customise the Timer
+  ///////////////////////////////////////////////////////////////////////////////
+
+  void offset_timer(int value) {
+    last_timer = time_right_now() + value;
   }
 };
