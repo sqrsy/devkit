@@ -1,6 +1,6 @@
-#include "C:/Users/61436/Dropbox/Hobbies/Electronics/GitHub/devkit/EuroStep/hardware/quantiser.h"
-#include "C:/Users/61436/Dropbox/Hobbies/Electronics/GitHub/devkit/EuroStep/EuroStep.h"
-#include "C:/Users/61436/Dropbox/Hobbies/Electronics/GitHub/devkit/EuroStep/add-ons/Quantiser.h"
+#include "C:/Users/Thom/Dropbox/Hobbies/Electronics/GitHub/devkit/EuroStep/hardware/quantiser.h"
+#include "C:/Users/Thom/Dropbox/Hobbies/Electronics/GitHub/devkit/EuroStep/EuroStep.h"
+#include "C:/Users/Thom/Dropbox/Hobbies/Electronics/GitHub/devkit/EuroStep/add-ons/Quantiser.h"
 
 class make_quantiser : public EuroStep::EuroStep {
 public:
@@ -44,8 +44,8 @@ public:
     output_B = quantiser_B.get_quantised_cv();
 
     // get outgoing voltage
-    output_value_to_dac(1, output_A);  // mismatch between input and output jacks
-    output_value_to_dac(0, output_B);
+    output_value_to_dac(0, output_A);  // mismatch between input and output jacks
+    output_value_to_dac(1, output_B);
   }
 };
 
