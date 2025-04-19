@@ -5,6 +5,8 @@
 #define NUMBER_OF_JACKS 2
 #define V_DIVIDER_R1 220
 #define V_DIVIDER_R2 150
+#define JACK_IS_DIGITAL \
+  { false, false }
 #define PINS_JACK \
   { A0, A7 }
 
