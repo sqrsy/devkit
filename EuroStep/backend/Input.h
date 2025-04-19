@@ -6,7 +6,8 @@ Purpose: Read input from pins.
 Dependencies: This class inherits from the Timer class.
 
 Use: Create an instance of the class and then configure the settings:
--- setup_as_jack(int pin, int r1, int r2): Configures the input for an analog jack with smoothing.
+-- setup_as_digital_jack(int pin): Configures the input for an digital jack.
+-- setup_as_analog_jack(int pin, int r1, int r2): Configures the input for an analog jack with smoothing.
 -- setup_as_pot(int pin): Configures the input for a potentiometer without smoothing.
 -- setup_as_switch(int pin): Configures the input for a digital switch (binary input).
 
@@ -15,6 +16,7 @@ You can customise settings further via:
 -- set_read_frequency_offset(int value): Sets a time offset for staggered input readings.
 -- set_max_input_mV(int value): Sets the maximum expected input voltage in millivolts.
 -- set_reverse_input(bool value): Enables or disables reversing of the input value.
+-- set_smooth_input(bool value): Toggles whether to apply moving average to input readings.
 -- set_debug(bool value): Enables or disables debug mode for additional logging.
 
 You actually get the input value via:
@@ -25,6 +27,8 @@ You actually get the input value via:
 -- -- Used to trigger a clock rise signal.
 -- check_if_input_went_high_to_low(): Detects if the input transitioned from high to low.
 -- -- Used to trigger a clock fall signal.
+-- get_input_immediately(): Returns the current input value immediately.
+-- -- Used to clear out input history.
 */
 
 class Input : public Timer {
@@ -38,7 +42,6 @@ private:
 
   // how often to read input
   int read_frequency = 0;
-  int read_frequency_offset = 0;
 
   // store & convert read value
   int last_value_mV = 0;  // used to add "clock rise" and "clock fall" logic
@@ -50,8 +53,8 @@ private:
   int max_input_mV = 5000;
 
   // used to back-calculate mV from voltage divider network
-  int r1_value;
-  int r2_value;
+  int r1_value = 0;
+  int r2_value = 0;
 
   // used to smooth input using moving average (i.e., for "jacks")
   bool smooth_input = false;
@@ -85,6 +88,7 @@ private:
   void read_input_if_ready() {
     if (get_timer() > read_frequency) {
       read_input_immediately();
+      reset_timer();
     }
   }
 
@@ -94,26 +98,44 @@ public:
   /// Wrappers for Input setup
   ///////////////////////////////////////////////////////////////////////////////
 
-  void setup_as_jack(int pin, int r1, int r2) {
+  void setup_as_digital_jack(int pin) {
+    pinMode(pin, INPUT);
+    input_pin = pin;
+    r1_value = 0;
+    r2_value = 0;
+    set_read_frequency(2);
+    set_read_frequency_offset(input_pin);
+    smooth_input = false;
+    input_is_digital = true;
+  }
+
+  void setup_as_analog_jack(int pin, int r1, int r2) {
+    pinMode(pin, INPUT);
     input_pin = pin;
     r1_value = r1;
     r2_value = r2;
     set_read_frequency(2);
     set_read_frequency_offset(input_pin);
     smooth_input = true;
+    input_is_digital = false;
   }
 
   void setup_as_pot(int pin) {
+    pinMode(pin, INPUT);
     input_pin = pin;
     r1_value = 0;
     r2_value = 0;
     set_read_frequency(10);
     set_read_frequency_offset(input_pin);
     smooth_input = false;
+    input_is_digital = false;
   }
 
   void setup_as_switch(int pin) {
+    pinMode(pin, INPUT_PULLUP);
     input_pin = pin;
+    r1_value = 0;
+    r2_value = 0;
     set_read_frequency(10);
     set_read_frequency_offset(input_pin);
     smooth_input = false;
@@ -129,7 +151,7 @@ public:
   }
 
   void set_read_frequency_offset(int value) {
-    read_frequency_offset = value;
+    offset_timer(value);
   }
 
   void set_max_input_mV(int value) {
@@ -138,6 +160,10 @@ public:
 
   void set_reverse_input(bool value) {
     reverse_input = value;
+  }
+
+  void set_smooth_input(bool value) {
+    smooth_input = value;
   }
 
   void set_debug(bool value) {
@@ -172,5 +198,10 @@ public:
   bool check_if_input_went_high_to_low() {
     // read_input_if_ready(); -- don't need since read_jacks() is already run
     return (last_value_mV >= input_as_bool_threshold) & (current_value_mV < input_as_bool_threshold);
+  }
+
+  int get_input_immediately() {
+    read_input_immediately();
+    return current_value_mV;
   }
 };
