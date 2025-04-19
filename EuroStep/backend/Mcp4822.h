@@ -172,6 +172,10 @@ public:
     pin_sck = sck;
     pin_sdi = sdi;
     pin_ldac = ldac;
+    pinMode(pin_cs, OUTPUT);
+    pinMode(pin_sck, OUTPUT);
+    pinMode(pin_sdi, OUTPUT);
+    pinMode(pin_ldac, OUTPUT);
   }
 
   void set_debug(bool value) {
