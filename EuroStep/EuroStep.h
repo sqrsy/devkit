@@ -90,7 +90,7 @@ public:
 
   // split output between DAC and digital streams
   int output_values_to_dac[4] = { 0 };
-  bool output_values_to_digital[NUMBER_OF_DIGITAL_OUTPUTS];
+  bool output_values_to_digital[NUMBER_OF_DIGITAL_OUTPUTS] = { false };
 
   // output classes
   Mcp4822 DAC1;
