@@ -13,22 +13,25 @@ Use: Create an instance of the class and then configure the settings:
 
 You can customise settings further via:
 -- set_read_frequency(int value): Sets how often the input should be read (in milliseconds).
+-- -- Over-ride default value byj calling Method after module.start();
 -- set_read_frequency_offset(int value): Sets a time offset for staggered input readings.
+-- -- Over-ride default value byj calling Method after module.start();
+-- set_smooth_input(bool value): Toggles whether to apply moving average to input readings.
+-- -- Over-ride default value byj calling Method after module.start();
 -- set_max_input_mV(int value): Sets the maximum expected input voltage in millivolts.
 -- set_reverse_input(bool value): Enables or disables reversing of the input value.
--- set_smooth_input(bool value): Toggles whether to apply moving average to input readings.
 -- set_debug(bool value): Enables or disables debug mode for additional logging.
 
 You actually get the input value via:
 -- get_input_as_mV(): Returns the current input value in millivolts (mV).
+-- get_input_as_mV_immediately(): Returns the current input value immediately (also resets timer if called).
+-- -- Used to clear out input history.
 -- get_input_as_percent(): Returns the current input value as a percentage of the maximum.
 -- get_input_as_bool(): Returns true or false based on the input threshold.
 -- check_if_input_went_low_to_high(): Detects if the input transitioned from low to high.
--- -- Used to trigger a clock rise signal.
+-- -- Used to trigger a clock rise signal. Will only occur once per Timer cycle.
 -- check_if_input_went_high_to_low(): Detects if the input transitioned from high to low.
--- -- Used to trigger a clock fall signal.
--- get_input_immediately(): Returns the current input value immediately.
--- -- Used to clear out input history.
+-- -- Used to trigger a clock fall signal. Will only occur once per Timer cycle.
 */
 
 class Input : public Timer {
@@ -42,6 +45,7 @@ private:
 
   // how often to read input
   int read_frequency = 0;
+  bool low_high_change_has_occurred = false;
 
   // store & convert read value
   int last_value_mV = 0;  // used to add "clock rise" and "clock fall" logic
@@ -85,10 +89,15 @@ private:
     if (reverse_input) current_value_mV = max_input_mV - current_value_mV;
   }
 
+  void read_input_and_reset_timer() {
+    read_input_immediately();
+    reset_timer();
+    low_high_change_has_occurred = false;  // ensure only one low-to-high or high-to-low event per Timer cycle
+  }
+
   void read_input_if_ready() {
     if (get_timer() > read_frequency) {
-      read_input_immediately();
-      reset_timer();
+      read_input_and_reset_timer();
     }
   }
 
@@ -179,6 +188,11 @@ public:
     return current_value_mV;
   }
 
+  int get_input_as_mV_immediately() {
+    read_input_and_reset_timer();
+    return current_value_mV;
+  }
+
   int get_input_as_percent() {
     read_input_if_ready();
     current_value_percent = map_mV_to_percent(current_value_mV, max_input_mV);
@@ -191,17 +205,28 @@ public:
   }
 
   bool check_if_input_went_low_to_high() {
-    // read_input_if_ready(); -- don't need since read_jacks() is already run
-    return (last_value_mV < input_as_bool_threshold) & (current_value_mV >= input_as_bool_threshold);
+    if ((last_value_mV < input_as_bool_threshold) & (current_value_mV >= input_as_bool_threshold)) {
+      if (!low_high_change_has_occurred) {  // ensure only one low-to-high or high-to-low event per Timer cycle
+        low_high_change_has_occurred = true;
+        return true;
+      } else {
+        return false;
+      }
+    } else {
+      return false;
+    }
   }
 
   bool check_if_input_went_high_to_low() {
-    // read_input_if_ready(); -- don't need since read_jacks() is already run
-    return (last_value_mV >= input_as_bool_threshold) & (current_value_mV < input_as_bool_threshold);
-  }
-
-  int get_input_immediately() {
-    read_input_immediately();
-    return current_value_mV;
+    if ((last_value_mV >= input_as_bool_threshold) & (current_value_mV < input_as_bool_threshold)) {
+      if (!low_high_change_has_occurred) {  // ensure only one low-to-high or high-to-low event per Timer cycle
+        low_high_change_has_occurred = true;
+        return true;
+      } else {
+        return false;
+      }
+    } else {
+      return false;
+    }
   }
 };
